@@ -118,9 +118,9 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
     - **Property 7: Receipt Serialization Round-Trip**
     - **Validates: Requirements 2.7, 11.1, 11.2, 11.3**
 
-- [ ] 6. Implement Camera functionality
+- [x] 6. Implement Camera functionality
 
-  - [ ] 6.1 Create CameraService
+  - [x] 6.1 Create CameraService
 
     - Implement captureImage() with camera package
     - Implement pickFromGallery() with image_picker
@@ -128,7 +128,7 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
     - **Copilot Prompt:** `Create Flutter CameraService class with captureImage() using camera package, pickFromGallery() using image_picker, and compressImage() reducing to max 1MB using flutter_image_compress`
     - _Requirements: 1.1_
 
-  - [ ] 6.2 Build Camera Screen UI
+  - [x] 6.2 Build Camera Screen UI
     - Full-screen camera preview with receipt guide overlay
     - Bottom bar with Gallery, Capture, Flash buttons
     - **Copilot Prompt:** `Create Flutter CameraScreen widget with CameraPreview, blue rectangle overlay guide for receipt alignment, and bottom action bar with IconButtons for gallery, capture, and flash toggle`
@@ -136,7 +136,7 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
 
 - [ ] 7. Implement Receipt Repository
 
-  - [ ] 7.1 Create ReceiptRepository with image upload
+  - [x] 7.1 Create ReceiptRepository with image upload
 
     - Upload image to Firebase Storage
     - Return download URL
