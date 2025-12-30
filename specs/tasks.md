@@ -365,7 +365,7 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
     - **Property 12: Household Invite Code Uniqueness**
     - **Validates: Requirements 5.1**
 
-  - [ ] 15.5 Write property test for household membership
+  - [x] 15.5 Write property test for household membership
 
     - **Property 13: Household Membership After Join**
     - **Validates: Requirements 5.2**
