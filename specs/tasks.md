@@ -143,7 +143,7 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
     - **Copilot Prompt:** `Create Flutter ReceiptRepository with uploadImage(File) method that uploads to Firebase Storage path 'receipts/{userId}/{timestamp}.jpg' and returns download URL`
     - _Requirements: 2.7_
 
-  - [ ] 7.2 Implement scanReceipt API call to n8n
+  - [x] 7.2 Implement scanReceipt API call to n8n
 
     - POST to n8n webhook with image_url
     - Parse response into Receipt object
@@ -151,12 +151,12 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
     - **Copilot Prompt:** `Create scanReceipt(String imageUrl, String userId) method that POSTs to n8n webhook, parses receipt_data JSON response into Receipt object, throws ReceiptParseException on error`
     - _Requirements: 1.1, 1.2, 1.3_
 
-  - [ ] 7.3 Write property test for Pfand classification
+  - [x] 7.3 Write property test for Pfand classification
 
     - **Property 2: Pfand Item Classification**
     - **Validates: Requirements 1.4**
 
-  - [ ] 7.4 Write property test for discount consistency
+  - [x] 7.4 Write property test for discount consistency
     - **Property 3: Discount Field Consistency**
     - **Validates: Requirements 1.5**
 
