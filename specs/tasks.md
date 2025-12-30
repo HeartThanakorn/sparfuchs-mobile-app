@@ -331,7 +331,7 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
     - **Copilot Prompt:** `Create Flutter Riverpod providers: receiptProvider as StreamProvider listening to Firestore receipts, householdProvider for current household, userProvider for authenticated user`
     - _Requirements: 2.6_
 
-  - [ ] 14.2 Implement receipt editing state
+  - [x] 14.2 Implement receipt editing state
     - Local state for editing receipt before save
     - Recalculation logic for totals
     - **Copilot Prompt:** `Create Flutter Riverpod StateNotifier for ReceiptEditState with methods updateItemQuantity(itemId, quantity), updateItemPrice(itemId, price) that recalculate totals.subtotal and totals.grandTotal`
