@@ -375,7 +375,7 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
     - **Property 14: Household Receipt Sync**
     - **Validates: Requirements 5.3**
 
-  - [ ] 15.7 Write property test for household spending aggregation
+  - [x] 15.7 Write property test for household spending aggregation
 
     - **Property 15: Household Spending Aggregation**
     - **Validates: Requirements 5.5**
