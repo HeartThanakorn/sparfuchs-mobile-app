@@ -360,7 +360,7 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
     - **Copilot Prompt:** `Create Flutter HouseholdSpendingCalculator that sums grand_total from all receipts with matching household_id for the selected time period`
     - _Requirements: 5.5_
 
-  - [ ] 15.4 Write property test for invite code uniqueness
+  - [x] 15.4 Write property test for invite code uniqueness
 
     - **Property 12: Household Invite Code Uniqueness**
     - **Validates: Requirements 5.1**
