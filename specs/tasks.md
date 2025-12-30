@@ -106,7 +106,7 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
     - **Copilot Prompt:** `Create Flutter Clean Architecture folder structure with features/receipt, features/dashboard, features/household, core/services, shared/widgets directories`
     - _Requirements: 10.1_
 
-  - [ ] 5.2 Implement Receipt data models in Dart
+  - [x] 5.2 Implement Receipt data models in Dart
 
     - Create Receipt, ReceiptData, LineItem, Merchant, Transaction, Totals, TaxEntry, AiMetadata classes
     - Implement fromJson/toJson serialization
@@ -114,7 +114,7 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
     - **Copilot Prompt:** `Create Dart freezed classes for Receipt with nested ReceiptData, LineItem with isPfand getter returning type == 'pfand_bottle', and AiMetadata with needsReview getter for confidence < 0.8`
     - _Requirements: 11.1, 11.2, 11.3_
 
-  - [ ] 5.3 Write property test for Receipt serialization round-trip
+  - [x] 5.3 Write property test for Receipt serialization round-trip
     - **Property 7: Receipt Serialization Round-Trip**
     - **Validates: Requirements 2.7, 11.1, 11.2, 11.3**
 

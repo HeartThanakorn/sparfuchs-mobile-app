@@ -58,6 +58,7 @@ dev_dependencies:
   freezed: ^2.5.7
   json_serializable: ^6.9.4
   riverpod_generator: ^2.6.3
+  glados: ^1.1.7
 
 
 flutter:
