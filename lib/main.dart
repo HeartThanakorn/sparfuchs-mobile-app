@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sparfuchs_ai/features/receipt/presentation/screens/camera_screen.dart';
 import 'shared/theme/app_theme.dart';
 
 void main() {
@@ -68,20 +69,26 @@ class HomeScreen extends StatelessWidget {
             ),
             const SizedBox(height: 48),
             Text(
-              '🦊 Coming Soon!',
-              style: Theme.of(context).textTheme.headlineMedium,
+              '🦊 Tap the camera to scan a receipt!',
+              style: Theme.of(context).textTheme.bodyLarge,
             ),
           ],
         ),
       ),
       floatingActionButton: FloatingActionButton.large(
-        onPressed: () {
-          // TODO: Navigate to Camera Screen
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Camera scanning coming soon!'),
-            ),
+        onPressed: () async {
+          // Navigate to Camera Screen
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const CameraScreen()),
           );
+          if (result != null && context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Bild erfolgreich aufgenommen! 📸'),
+              ),
+            );
+          }
         },
         child: const Icon(Icons.camera_alt, size: 32),
       ),

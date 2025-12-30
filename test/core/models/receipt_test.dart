@@ -1,23 +1,23 @@
-
 import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:glados/glados.dart' hide expect; 
+// ignore: implementation_imports
+import 'package:glados/glados.dart' hide expect;
 import 'package:sparfuchs_ai/core/models/receipt.dart';
 
 // Extension to add missing generators or helpers
 extension AnyUtils on Any {
   Generator<T?> nullOr<T>(Generator<T> gen) {
-    return combine2(this.bool, gen, (isNull, value) => isNull ? null : value);
+    return combine2(any.bool, gen, (isNull, value) => isNull ? null : value);
   }
 
   Generator<DateTime> get safeDate {
     return combine6(
-      this.intInRange(2020, 2030),
-      this.intInRange(1, 12),
-      this.intInRange(1, 28),
-      this.intInRange(0, 23),
-      this.intInRange(0, 59),
-      this.intInRange(0, 59),
+      any.intInRange(2020, 2030),
+      any.intInRange(1, 12),
+      any.intInRange(1, 28),
+      any.intInRange(0, 23),
+      any.intInRange(0, 59),
+      any.intInRange(0, 59),
       (y, m, d, h, min, s) => DateTime(y, m, d, h, min, s),
     );
   }
@@ -27,10 +27,10 @@ extension AnyUtils on Any {
 extension AnyMerchant on Any {
   Generator<Merchant> get merchant {
     return combine4(
-      this.letters,
-      this.nullOr(this.letters),
-      this.nullOr(this.letters),
-      this.nullOr(this.letters),
+      any.letters,
+      any.nullOr(any.letters),
+      any.nullOr(any.letters),
+      any.nullOr(any.letters),
       (name, branchId, address, rawText) => Merchant(
         name: name,
         branchId: branchId,
@@ -44,10 +44,10 @@ extension AnyMerchant on Any {
 extension AnyTransaction on Any {
   Generator<Transaction> get transaction {
     return combine4(
-      this.dateString, 
-      this.timeString, 
-      this.letters,
-      this.choose(['CASH', 'CARD']),
+      any.dateString,
+      any.timeString,
+      any.letters,
+      any.choose(['CASH', 'CARD']),
       (date, time, currency, paymentMethod) => Transaction(
         date: date,
         time: time,
@@ -56,22 +56,22 @@ extension AnyTransaction on Any {
       ),
     );
   }
-  
+
   Generator<String> get dateString {
     return combine3(
-      this.intInRange(2020, 2030), 
-      this.intInRange(1, 12),
-      this.intInRange(1, 28),
-      (y, m, d) => '$y-${m.toString().padLeft(2, '0')}-${d.toString().padLeft(2, '0')}'
+      any.intInRange(2020, 2030),
+      any.intInRange(1, 12),
+      any.intInRange(1, 28),
+      (y, m, d) => '$y-${m.toString().padLeft(2, '0')}-${d.toString().padLeft(2, '0')}',
     );
   }
 
   Generator<String> get timeString {
-     return combine3(
-      this.intInRange(0, 23), 
-      this.intInRange(0, 59),
-      this.intInRange(0, 59),
-      (h, m, s) => '$h:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}'
+    return combine3(
+      any.intInRange(0, 23),
+      any.intInRange(0, 59),
+      any.intInRange(0, 59),
+      (h, m, s) => '$h:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}',
     );
   }
 }
@@ -79,15 +79,15 @@ extension AnyTransaction on Any {
 extension AnyLineItem on Any {
   Generator<LineItem> get lineItem {
     return combine9(
-      this.nullOr(this.letters), // itemId
-      this.letters,       // description
-      this.letters,       // category
-      this.int,          // quantity
-      this.double,       // unitPrice
-      this.double,       // totalPrice
-      this.nullOr(this.double), // discount
-      this.bool,         // isDiscounted
-      this.nullOr(this.letters), // type
+      any.nullOr(any.letters), // itemId
+      any.letters, // description
+      any.letters, // category
+      any.int, // quantity
+      any.double, // unitPrice
+      any.double, // totalPrice
+      any.nullOr(any.double), // discount
+      any.bool, // isDiscounted
+      any.nullOr(any.letters), // type
       (itemId, desc, cat, qty, price, total, discount, isDisc, type) => LineItem(
         itemId: itemId,
         description: desc,
@@ -106,11 +106,11 @@ extension AnyLineItem on Any {
 
 extension AnyTotals on Any {
   Generator<Totals> get totals {
-     return combine4(
-      this.double,
-      this.double,
-      this.double,
-      this.double,
+    return combine4(
+      any.double,
+      any.double,
+      any.double,
+      any.double,
       (sub, pfand, tax, grand) => Totals(
         subtotal: sub,
         pfandTotal: pfand,
@@ -124,8 +124,8 @@ extension AnyTotals on Any {
 extension AnyTaxEntry on Any {
   Generator<TaxEntry> get taxEntry {
     return combine2(
-      this.double,
-      this.double,
+      any.double,
+      any.double,
       (rate, amount) => TaxEntry(rate: rate, amount: amount),
     );
   }
@@ -134,9 +134,9 @@ extension AnyTaxEntry on Any {
 extension AnyAiMetadata on Any {
   Generator<AiMetadata> get aiMetadata {
     return combine3(
-      this.double,
-      this.letters,
-      this.nullOr(this.int),
+      any.double,
+      any.letters,
+      any.nullOr(any.int),
       (score, model, time) => AiMetadata(
         confidenceScore: score,
         modelUsed: model,
@@ -149,12 +149,12 @@ extension AnyAiMetadata on Any {
 extension AnyReceiptData on Any {
   Generator<ReceiptData> get receiptData {
     return combine6(
-      this.merchant,
-      this.transaction,
-      this.list(this.lineItem),
-      this.totals,
-      this.list(this.taxEntry),
-      this.aiMetadata,
+      any.merchant,
+      any.transaction,
+      any.list(any.lineItem),
+      any.totals,
+      any.list(any.taxEntry),
+      any.aiMetadata,
       (merchant, transaction, items, totals, taxes, aiMetadata) => ReceiptData(
         merchant: merchant,
         transaction: transaction,
@@ -170,14 +170,14 @@ extension AnyReceiptData on Any {
 extension AnyReceipt on Any {
   Generator<Receipt> get receipt {
     return combine8(
-      this.letters, // receiptId
-      this.letters, // userId
-      this.nullOr(this.letters), // householdId
-      this.letters, // imageUrl
-      this.bool, // isBookmarked
-      this.receiptData, // receiptData
-      this.safeDate, // createdAt
-      this.safeDate, // updatedAt
+      any.letters, // receiptId
+      any.letters, // userId
+      any.nullOr(any.letters), // householdId
+      any.letters, // imageUrl
+      any.bool, // isBookmarked
+      any.receiptData, // receiptData
+      any.safeDate, // createdAt
+      any.safeDate, // updatedAt
       (id, uid, hid, img, bookmarked, data, created, updated) => Receipt(
         receiptId: id,
         userId: uid,
