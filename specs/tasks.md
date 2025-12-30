@@ -337,9 +337,9 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
     - **Copilot Prompt:** `Create Flutter Riverpod StateNotifier for ReceiptEditState with methods updateItemQuantity(itemId, quantity), updateItemPrice(itemId, price) that recalculate totals.subtotal and totals.grandTotal`
     - _Requirements: 2.6_
 
-- [ ] 15. Implement Household Sharing
+- [x] 15. Implement Household Sharing
 
-  - [ ] 15.1 Create HouseholdRepository
+  - [x] 15.1 Create HouseholdRepository
 
     - createHousehold(), joinHousehold(code), leaveHousehold()
     - Generate unique 8-character invite codes
