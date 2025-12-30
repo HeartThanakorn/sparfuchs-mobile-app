@@ -323,9 +323,9 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
 
 ### Phase 4: Logic & Polish
 
-- [ ] 14. Implement state management
+- [x] 14. Implement state management
 
-  - [ ] 14.1 Set up Riverpod providers
+  - [x] 14.1 Set up Riverpod providers
 
     - ReceiptProvider, HouseholdProvider, UserProvider
     - **Copilot Prompt:** `Create Flutter Riverpod providers: receiptProvider as StreamProvider listening to Firestore receipts, householdProvider for current household, userProvider for authenticated user`
