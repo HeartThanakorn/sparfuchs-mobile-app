@@ -370,7 +370,7 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
     - **Property 13: Household Membership After Join**
     - **Validates: Requirements 5.2**
 
-  - [ ] 15.6 Write property test for household receipt sync
+  - [x] 15.6 Write property test for household receipt sync
 
     - **Property 14: Household Receipt Sync**
     - **Validates: Requirements 5.3**
