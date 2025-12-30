@@ -278,9 +278,9 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
     - **Property 11: Bookmark Persistence**
     - **Validates: Requirements 4.5**
 
-- [ ] 12. Build Inflation Tracker Screen
+- [x] 12. Build Inflation Tracker Screen
 
-  - [ ] 12.1 Create InflationTrackerScreen with search
+  - [x] 12.1 Create InflationTrackerScreen with search
 
     - Product search bar
     - Trending price changes section
@@ -288,31 +288,31 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
     - **Copilot Prompt:** `Create Flutter InflationTrackerScreen with SearchBar for products, TrendingPriceChanges section showing products with >10% price change, and TrackedProductsList from user's scanned products`
     - _Requirements: 6.1, 6.3_
 
-  - [ ] 12.2 Implement ProductDetailScreen with price chart
+  - [x] 12.2 Implement ProductDetailScreen with price chart
 
     - Line chart showing price history over time
     - Price by merchant comparison
     - **Copilot Prompt:** `Create Flutter ProductDetailScreen with fl_chart LineChart plotting price_history dates on x-axis and prices on y-axis, and MerchantPriceList showing latest price per merchant with 'Cheapest' badge`
     - _Requirements: 6.2, 6.4_
 
-  - [ ] 12.3 Implement price change percentage calculation
+  - [x] 12.3 Implement price change percentage calculation
 
     - Calculate and display percentage change
     - Warning indicator for >10% increase
     - **Copilot Prompt:** `Create Flutter PriceChangeIndicator that calculates ((newPrice - oldPrice) / oldPrice * 100), displays with up/down arrow icon, red color for increases >10%`
     - _Requirements: 6.5, 6.3_
 
-  - [ ] 12.4 Write property test for price history recording
+  - [x] 12.4 Write property test for price history recording
 
     - **Property 17: Price History Recording**
     - **Validates: Requirements 6.1**
 
-  - [ ] 12.5 Write property test for inflation alert threshold
+  - [x] 12.5 Write property test for inflation alert threshold
 
     - **Property 18: Inflation Alert Threshold**
     - **Validates: Requirements 6.3**
 
-  - [ ] 12.6 Write property test for price comparison calculation
+  - [x] 12.6 Write property test for price comparison calculation
     - **Property 19: Price Comparison and Percentage Calculation**
     - **Validates: Requirements 6.4, 6.5**
 
