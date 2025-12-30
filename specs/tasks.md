@@ -316,7 +316,7 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
     - **Property 19: Price Comparison and Percentage Calculation**
     - **Validates: Requirements 6.4, 6.5**
 
-- [ ] 13. Checkpoint - UI screens complete
+- [x] 13. Checkpoint - UI screens complete
   - Test all screens with mock data
   - Verify German locale formatting
   - Ensure all tests pass, ask the user if questions arise.

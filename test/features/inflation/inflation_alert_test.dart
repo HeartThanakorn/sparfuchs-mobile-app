@@ -98,8 +98,6 @@ void main() {
         home: Material(child: PriceChangeIndicator(currentPrice: 115, previousPrice: 100)), // 15%
       ));
       
-      final container = tester.widget<Container>(find.byType(Container).first);
-      final decoration = container.decoration as BoxDecoration;
       // Note: The widget uses color.withValues(alpha: 0.1), so we can't strict match color object
       // But we can check if it creates the warning icon
       expect(find.byIcon(Icons.warning_amber_rounded), findsOneWidget);

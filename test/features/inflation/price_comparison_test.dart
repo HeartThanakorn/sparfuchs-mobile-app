@@ -23,19 +23,6 @@ void main() {
       return prices.reduce((curr, next) => curr.price < next.price ? curr : next);
     }
 
-    double calculateSavingPercentage(double currentPrice, double comparisonPrice) {
-      if (currentPrice == 0) return 0.0;
-      // Formula: ((Current - Compare) / Current) * 100 for saving?
-      // Or just standard diff: ((Compare - Current) / Current) * 100
-      // Let's assume standard % difference for comparison
-      // If saving: (Higher - Lower) / Higher * 100
-      
-      final diff = (currentPrice - comparisonPrice).abs();
-      return (diff / (currentPrice > comparisonPrice ? currentPrice : comparisonPrice)) * 100;
-      
-      // Simpler standard change for generic comparison:
-      // return ((currentPrice - comparisonPrice) / comparisonPrice) * 100;
-    }
 
     // Standard percentage change formula used in PriceChangeIndicator
     double calculatePercentageChange(double newPrice, double oldPrice) {
