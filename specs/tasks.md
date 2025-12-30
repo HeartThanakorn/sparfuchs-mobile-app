@@ -380,7 +380,7 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
     - **Property 15: Household Spending Aggregation**
     - **Validates: Requirements 5.5**
 
-  - [ ] 15.8 Write property test for household leave data isolation
+  - [x] 15.8 Write property test for household leave data isolation
     - **Property 16: Household Leave Data Isolation**
     - **Validates: Requirements 5.6**
 
