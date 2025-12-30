@@ -353,7 +353,7 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
     - **Copilot Prompt:** `Create Flutter HouseholdReceiptsStream that queries Firestore receipts where household_id equals current user's household_id, ordered by date descending`
     - _Requirements: 5.3_
 
-  - [ ] 15.3 Implement household spending aggregation
+  - [x] 15.3 Implement household spending aggregation
 
     - Sum grand_total for all household receipts
     - Display in dashboard
