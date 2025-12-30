@@ -2,12 +2,89 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sparfuchs_ai/core/constants/app_constants.dart';
 import 'package:sparfuchs_ai/core/models/receipt.dart';
+import 'package:sparfuchs_ai/features/receipt/presentation/widgets/edit_line_item_dialog.dart';
 
 /// Screen for verifying and reviewing a scanned receipt
-class VerificationScreen extends StatelessWidget {
+class VerificationScreen extends StatefulWidget {
   final Receipt receipt;
 
   const VerificationScreen({super.key, required this.receipt});
+
+  @override
+  State<VerificationScreen> createState() => _VerificationScreenState();
+}
+
+class _VerificationScreenState extends State<VerificationScreen> {
+  late List<LineItem> _items;
+  late Totals _totals;
+  late bool _isBookmarked;
+
+  @override
+  void initState() {
+    super.initState();
+    _items = List.from(widget.receipt.receiptData.items);
+    _totals = widget.receipt.receiptData.totals;
+    _isBookmarked = widget.receipt.isBookmarked;
+  }
+
+  /// Recalculates all totals based on current items
+  void _recalculateTotals() {
+    double subtotal = 0;
+    double pfandTotal = 0;
+
+    for (final item in _items) {
+      if (item.isPfand) {
+        pfandTotal += item.totalPrice;
+      } else {
+        subtotal += item.totalPrice;
+      }
+    }
+
+    // Estimate tax (German 7% for food)
+    final taxAmount = subtotal * 0.07;
+    final grandTotal = subtotal + pfandTotal + taxAmount;
+
+    setState(() {
+      _totals = Totals(
+        subtotal: subtotal,
+        pfandTotal: pfandTotal,
+        taxAmount: taxAmount,
+        grandTotal: grandTotal,
+      );
+    });
+  }
+
+  /// Handle editing a line item
+  Future<void> _editItem(int index) async {
+    final updatedItem = await EditLineItemDialog.show(context, _items[index]);
+    if (updatedItem != null) {
+      setState(() {
+        _items[index] = updatedItem;
+      });
+      _recalculateTotals();
+    }
+  }
+
+  /// Build the updated receipt for saving
+  Receipt _buildUpdatedReceipt() {
+    return Receipt(
+      receiptId: widget.receipt.receiptId,
+      userId: widget.receipt.userId,
+      householdId: widget.receipt.householdId,
+      imageUrl: widget.receipt.imageUrl,
+      isBookmarked: _isBookmarked,
+      receiptData: ReceiptData(
+        merchant: widget.receipt.receiptData.merchant,
+        transaction: widget.receipt.receiptData.transaction,
+        items: _items,
+        totals: _totals,
+        taxes: widget.receipt.receiptData.taxes,
+        aiMetadata: widget.receipt.receiptData.aiMetadata,
+      ),
+      createdAt: widget.receipt.createdAt,
+      updatedAt: DateTime.now(),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,10 +95,12 @@ class VerificationScreen extends StatelessWidget {
           // Bookmark toggle
           IconButton(
             icon: Icon(
-              receipt.isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+              _isBookmarked ? Icons.bookmark : Icons.bookmark_border,
             ),
             onPressed: () {
-              // TODO: Toggle bookmark
+              setState(() {
+                _isBookmarked = !_isBookmarked;
+              });
             },
           ),
         ],
@@ -32,13 +111,13 @@ class VerificationScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Conditional Review Needed Banner
-            if (receipt.receiptData.aiMetadata.needsReview)
+            if (widget.receipt.receiptData.aiMetadata.needsReview)
               const _ReviewNeededBanner(),
 
             const SizedBox(height: 16),
 
             // Purchase Info Card
-            _PurchaseInfoCard(receipt: receipt),
+            _PurchaseInfoCard(receipt: widget.receipt),
 
             const SizedBox(height: 24),
 
@@ -47,35 +126,44 @@ class VerificationScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Artikel (${receipt.receiptData.items.length})',
+                  'Artikel (${_items.length})',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                 ),
-                TextButton.icon(
-                  onPressed: () {
-                    // TODO: Edit items
-                  },
-                  icon: const Icon(Icons.edit, size: 18),
-                  label: const Text('Bearbeiten'),
+                Text(
+                  'Tippen zum Bearbeiten',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: const Color(AppColors.neutralGray),
+                      ),
                 ),
               ],
             ),
 
             const SizedBox(height: 8),
 
-            // Items List
-            _ItemsList(items: receipt.receiptData.items),
+            // Items List (now tappable)
+            _ItemsList(
+              items: _items,
+              onItemTap: _editItem,
+            ),
 
             const SizedBox(height: 24),
 
-            // Summary Card
-            _SummaryCard(totals: receipt.receiptData.totals),
+            // Summary Card (uses recalculated totals)
+            _SummaryCard(totals: _totals),
 
             const SizedBox(height: 32),
 
             // Action Buttons
-            _ActionButtons(receipt: receipt),
+            _ActionButtons(
+              onConfirm: () {
+                Navigator.pop(context, _buildUpdatedReceipt());
+              },
+              onDiscard: () {
+                Navigator.pop(context);
+              },
+            ),
           ],
         ),
       ),
@@ -298,43 +386,133 @@ class _InfoChip extends StatelessWidget {
   }
 }
 
-/// List of line items
+/// List of line items separated into regular and Pfand sections
 class _ItemsList extends StatelessWidget {
   final List<LineItem> items;
+  final void Function(int index)? onItemTap;
 
-  const _ItemsList({required this.items});
+  const _ItemsList({required this.items, this.onItemTap});
 
   @override
   Widget build(BuildContext context) {
-    return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: items.length,
-      separatorBuilder: (_, __) => const Divider(height: 1),
-      itemBuilder: (context, index) {
-        final item = items[index];
-        return _ItemTile(item: item);
-      },
+    // Separate items into regular and Pfand with original indices
+    final regularIndices = <int>[];
+    final pfandIndices = <int>[];
+    for (int i = 0; i < items.length; i++) {
+      if (items[i].isPfand) {
+        pfandIndices.add(i);
+      } else {
+        regularIndices.add(i);
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Regular Items Section
+        if (regularIndices.isNotEmpty) ...[
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: regularIndices.length,
+            separatorBuilder: (_, __) => const Divider(height: 1),
+            itemBuilder: (context, index) {
+              final originalIndex = regularIndices[index];
+              return _ItemTile(
+                item: items[originalIndex],
+                onTap: onItemTap != null ? () => onItemTap!(originalIndex) : null,
+              );
+            },
+          ),
+        ],
+
+        // Pfand Section (if any)
+        if (pfandIndices.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          // Deposit Section Header
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(AppColors.successGreen).withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: const Color(AppColors.successGreen).withValues(alpha: 0.3),
+              ),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.recycling,
+                  color: Color(AppColors.successGreen),
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'PFAND / EINWEG',
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: const Color(AppColors.successGreen),
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.2,
+                      ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Pfand Items List
+          Container(
+            decoration: BoxDecoration(
+              color: const Color(AppColors.successGreen).withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: pfandIndices.length,
+              separatorBuilder: (_, __) => Divider(
+                height: 1,
+                color: const Color(AppColors.successGreen).withValues(alpha: 0.2),
+              ),
+              itemBuilder: (context, index) {
+                final originalIndex = pfandIndices[index];
+                return _ItemTile(
+                  item: items[originalIndex],
+                  onTap: onItemTap != null ? () => onItemTap!(originalIndex) : null,
+                );
+              },
+            ),
+          ),
+        ],
+      ],
     );
   }
 }
 
-/// Single item tile
+/// Single item tile with discount highlighting
 class _ItemTile extends StatelessWidget {
   final LineItem item;
+  final VoidCallback? onTap;
 
-  const _ItemTile({required this.item});
+  const _ItemTile({required this.item, this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final isPfand = item.isPfand;
     final isDiscounted = item.isDiscounted;
+    
+    // Calculate original price (before discount)
+    final originalPrice = isDiscounted && item.discount != null
+        ? item.totalPrice + item.discount!
+        : item.totalPrice;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           // Category Icon
           Container(
             width: 40,
@@ -367,60 +545,81 @@ class _ItemTile extends StatelessWidget {
                       ),
                 ),
                 const SizedBox(height: 2),
-                Row(
-                  children: [
-                    Text(
-                      item.category,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: const Color(AppColors.neutralGray),
-                          ),
-                    ),
-                    if (isDiscounted) ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: const Color(AppColors.errorRed)
-                              .withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          '-${item.discount?.toStringAsFixed(2)} €',
-                          style:
-                              Theme.of(context).textTheme.labelSmall?.copyWith(
-                                    color: const Color(AppColors.errorRed),
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                        ),
+                Text(
+                  item.category,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: const Color(AppColors.neutralGray),
                       ),
-                    ],
-                  ],
                 ),
               ],
             ),
           ),
 
-          // Quantity & Price
+          // Price Column with Discount Highlighting
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(
-                '${item.totalPrice.toStringAsFixed(2)} €',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
+              // Current Price Row
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Discount Badge (moved next to price)
+                  if (isDiscounted && item.discount != null) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
+                      margin: const EdgeInsets.only(right: 8),
+                      decoration: BoxDecoration(
+                        color: const Color(AppColors.errorRed)
+                            .withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        '-${item.discount!.toStringAsFixed(2)} €',
+                        style:
+                            Theme.of(context).textTheme.labelSmall?.copyWith(
+                                  color: const Color(AppColors.errorRed),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                      ),
                     ),
+                  ],
+                  // Final Price
+                  Text(
+                    '${item.totalPrice.toStringAsFixed(2)} €',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: isDiscounted
+                              ? const Color(AppColors.successGreen)
+                              : null,
+                        ),
+                  ),
+                ],
               ),
-              if (item.quantity > 1)
+              // Original Price (struck through) when discounted
+              if (isDiscounted) ...[
+                const SizedBox(height: 2),
+                Text(
+                  '${originalPrice.toStringAsFixed(2)} €',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: const Color(AppColors.neutralGray),
+                        decoration: TextDecoration.lineThrough,
+                        decorationColor: const Color(AppColors.neutralGray),
+                      ),
+                ),
+              ],
+              // Quantity info
+              if (item.quantity > 1 && !isDiscounted)
                 Text(
                   '${item.quantity} × ${item.unitPrice.toStringAsFixed(2)} €',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: const Color(AppColors.neutralGray),
                       ),
                 ),
-            ],
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -446,10 +645,22 @@ class _ItemTile extends StatelessWidget {
 }
 
 /// Summary card with subtotal, Pfand, tax, and grand total
+/// Uses German locale number formatting (1.234,56 €)
 class _SummaryCard extends StatelessWidget {
   final Totals totals;
 
   const _SummaryCard({required this.totals});
+
+  /// German number format: comma as decimal separator, dot as thousand separator
+  static final _germanCurrencyFormat = NumberFormat.currency(
+    locale: 'de_DE',
+    symbol: '€',
+    decimalDigits: 2,
+  );
+
+  String _formatCurrency(double value) {
+    return _germanCurrencyFormat.format(value);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -460,18 +671,26 @@ class _SummaryCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            _SummaryRow(label: 'Zwischensumme', value: totals.subtotal),
+            _SummaryRow(
+              label: 'Zwischensumme',
+              formattedValue: _formatCurrency(totals.subtotal),
+            ),
             if (totals.pfandTotal > 0)
               _SummaryRow(
                 label: 'Pfand',
-                value: totals.pfandTotal,
+                formattedValue: _formatCurrency(totals.pfandTotal),
                 valueColor: const Color(AppColors.successGreen),
+                icon: Icons.recycling,
+                iconColor: const Color(AppColors.successGreen),
               ),
-            _SummaryRow(label: 'MwSt.', value: totals.taxAmount),
+            _SummaryRow(
+              label: 'MwSt.',
+              formattedValue: _formatCurrency(totals.taxAmount),
+            ),
             const Divider(height: 24),
             _SummaryRow(
               label: 'Gesamt',
-              value: totals.grandTotal,
+              formattedValue: _formatCurrency(totals.grandTotal),
               isTotal: true,
             ),
           ],
@@ -481,18 +700,22 @@ class _SummaryCard extends StatelessWidget {
   }
 }
 
-/// Single row in summary card
+/// Single row in summary card with optional icon
 class _SummaryRow extends StatelessWidget {
   final String label;
-  final double value;
+  final String formattedValue;
   final bool isTotal;
   final Color? valueColor;
+  final IconData? icon;
+  final Color? iconColor;
 
   const _SummaryRow({
     required this.label,
-    required this.value,
+    required this.formattedValue,
     this.isTotal = false,
     this.valueColor,
+    this.icon,
+    this.iconColor,
   });
 
   @override
@@ -502,16 +725,27 @@ class _SummaryRow extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: isTotal
-                ? Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    )
-                : Theme.of(context).textTheme.bodyMedium,
+          // Label with optional icon
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (icon != null) ...[
+                Icon(icon, size: 16, color: iconColor),
+                const SizedBox(width: 6),
+              ],
+              Text(
+                label,
+                style: isTotal
+                    ? Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        )
+                    : Theme.of(context).textTheme.bodyMedium,
+              ),
+            ],
           ),
+          // Value
           Text(
-            '${value.toStringAsFixed(2)} €',
+            formattedValue,
             style: isTotal
                 ? Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
@@ -529,9 +763,10 @@ class _SummaryRow extends StatelessWidget {
 
 /// Action buttons at the bottom
 class _ActionButtons extends StatelessWidget {
-  final Receipt receipt;
+  final VoidCallback onConfirm;
+  final VoidCallback onDiscard;
 
-  const _ActionButtons({required this.receipt});
+  const _ActionButtons({required this.onConfirm, required this.onDiscard});
 
   @override
   Widget build(BuildContext context) {
@@ -541,10 +776,7 @@ class _ActionButtons extends StatelessWidget {
         SizedBox(
           width: double.infinity,
           child: FilledButton.icon(
-            onPressed: () {
-              // TODO: Save and navigate to dashboard
-              Navigator.pop(context, receipt);
-            },
+            onPressed: onConfirm,
             icon: const Icon(Icons.check),
             label: const Text('Bestätigen & Speichern'),
             style: FilledButton.styleFrom(
@@ -559,10 +791,7 @@ class _ActionButtons extends StatelessWidget {
         SizedBox(
           width: double.infinity,
           child: OutlinedButton.icon(
-            onPressed: () {
-              // TODO: Confirm and delete
-              Navigator.pop(context);
-            },
+            onPressed: onDiscard,
             icon: const Icon(Icons.delete_outline),
             label: const Text('Verwerfen'),
             style: OutlinedButton.styleFrom(

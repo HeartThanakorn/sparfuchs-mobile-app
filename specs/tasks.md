@@ -167,7 +167,7 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
 
 ### Phase 3: UI Implementation (Screens)
 
-- [ ] 9. Build Verification Screen (Receipt Detail View)
+- [x] 9. Build Verification Screen (Receipt Detail View)
 
   - [x] 9.1 Create VerificationScreen layout
 
@@ -176,7 +176,7 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
     - **Copilot Prompt:** `Create Flutter VerificationScreen with conditional ReviewNeededBanner when receipt.aiMetadata.needsReview, PurchaseInfoCard showing merchant name with logo placeholder, date in DD.MM.YYYY format, time, and grand_total`
     - _Requirements: 1.7, 2.1, 2.2, 2.5_
 
-  - [ ] 9.2 Implement LineItem list with Pfand separation
+  - [x] 9.2 Implement LineItem list with Pfand separation
 
     - Regular items section
     - Visual separator with recycle icon for Deposit section
@@ -184,33 +184,33 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
     - **Copilot Prompt:** `Create Flutter ItemsList widget that separates items into two sections: regular items and Pfand items (where item.isPfand), with a 'DEPOSIT' header and RecycleIcon for Pfand section, each item showing description, quantity x unit_price, and total_price`
     - _Requirements: 2.2, 2.3_
 
-  - [ ] 9.3 Implement discount highlighting
+  - [x] 9.3 Implement discount highlighting
 
     - Show discount amount in red/green next to discounted items
     - Display original price struck through
     - **Copilot Prompt:** `Create Flutter LineItemTile that shows discount amount in Colors.red with '-' prefix when item.isDiscounted, positioned next to the total_price`
     - _Requirements: 2.4_
 
-  - [ ] 9.4 Implement Totals section
+  - [x] 9.4 Implement Totals section
 
     - Subtotal, Pfand Total (with ♻️), Grand Total
     - German number formatting (1.234,56 €)
     - **Copilot Prompt:** `Create Flutter TotalsCard showing subtotal, pfand_total with recycle icon, and grand_total with German locale NumberFormat using comma as decimal separator and € suffix`
     - _Requirements: 2.5, 10.2_
 
-  - [ ] 9.5 Implement editable fields with recalculation
+  - [x] 9.5 Implement editable fields with recalculation
 
     - Tap to edit quantity, unit_price
     - Auto-recalculate total_price and totals on change
     - **Copilot Prompt:** `Create Flutter EditableLineItem with TextFormFields for quantity and unit_price that trigger onChanged callback to recalculate total_price = quantity * unit_price - discount`
     - _Requirements: 2.6_
 
-  - [ ] 9.6 Write property test for total recalculation
+  - [x] 9.6 Write property test for total recalculation
 
     - **Property 6: Total Recalculation on Edit**
     - **Validates: Requirements 2.6**
 
-  - [ ] 9.7 Write property test for confidence score review trigger
+  - [x] 9.7 Write property test for confidence score review trigger
     - **Property 5: Confidence Score Review Trigger**
     - **Validates: Requirements 1.7**
 
