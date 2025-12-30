@@ -216,28 +216,28 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
 
 - [ ] 10. Build Dashboard Screen
 
-  - [ ] 10.1 Create Dashboard layout with time period tabs
+  - [x] 10.1 Create Dashboard layout with time period tabs
 
     - Days/Weeks/Months toggle
     - Date display and total amount
     - **Copilot Prompt:** `Create Flutter DashboardScreen with ToggleButtons for Days/Weeks/Months, current date display, and total spending amount in Euro`
     - _Requirements: 3.1_
 
-  - [ ] 10.2 Implement stacked bar chart with fl_chart
+  - [x] 10.2 Implement stacked bar chart with fl_chart
 
     - Category colors matching design palette
     - Monthly expense bars
     - **Copilot Prompt:** `Create Flutter ExpenseChart using fl_chart BarChart with stacked bars, each segment colored by category (Groceries=#4ECDC4, Household=#F39C12, Beverages=#3498DB, etc.), x-axis showing month names`
     - _Requirements: 3.2_
 
-  - [ ] 10.3 Implement category breakdown list
+  - [x] 10.3 Implement category breakdown list
 
     - Percentage, category name, Euro amount
     - Tap to filter receipts by category
     - **Copilot Prompt:** `Create Flutter CategoryBreakdownList with ListTiles showing percentage badge, category name, and amount, onTap navigates to ReceiptListScreen filtered by category`
     - _Requirements: 3.3, 3.4, 3.5_
 
-  - [ ] 10.4 Write property test for category percentage calculation
+  - [x] 10.4 Write property test for category percentage calculation
     - **Property 8: Category Percentage Calculation**
     - **Validates: Requirements 3.3, 3.4**
 
