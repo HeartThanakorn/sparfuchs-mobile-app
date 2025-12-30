@@ -241,9 +241,9 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
     - **Property 8: Category Percentage Calculation**
     - **Validates: Requirements 3.3, 3.4**
 
-- [ ] 11. Build Receipt Archive Screen
+- [x] 11. Build Receipt Archive Screen
 
-  - [ ] 11.1 Create ReceiptArchiveScreen with list
+  - [x] 11.1 Create ReceiptArchiveScreen with list
 
     - Receipts sorted by date (newest first)
     - Show merchant, date, time, grand_total
@@ -251,30 +251,30 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
     - **Copilot Prompt:** `Create Flutter ReceiptArchiveScreen with StreamBuilder listening to Firestore receipts ordered by transaction.date descending, ListTile showing merchant name, date, time, grand_total, and CircleAvatar for scanned_by user`
     - _Requirements: 4.1, 4.2, 5.4_
 
-  - [ ] 11.2 Implement search functionality
+  - [x] 11.2 Implement search functionality
 
     - Search by merchant name, product description, date range
     - **Copilot Prompt:** `Create Flutter ReceiptSearchDelegate with SearchBar that filters receipts where merchant.name contains query OR any item.description contains query, with DateRangePicker for date filtering`
     - _Requirements: 4.3_
 
-  - [ ] 11.3 Implement bookmark functionality
+  - [x] 11.3 Implement bookmark functionality
 
     - Bookmark icon toggle on receipt
     - Bookmarks tab/filter
     - **Copilot Prompt:** `Create Flutter BookmarkButton IconButton that toggles receipt.isBookmarked in Firestore, with filled/outlined icon state, and BookmarksView filtering where isBookmarked == true`
     - _Requirements: 4.5_
 
-  - [ ] 11.4 Write property test for archive sort order
+  - [x] 11.4 Write property test for archive sort order
 
     - **Property 9: Receipt Archive Sort Order**
     - **Validates: Requirements 4.1**
 
-  - [ ] 11.5 Write property test for search filter accuracy
+  - [x] 11.5 Write property test for search filter accuracy
 
     - **Property 10: Search Filter Accuracy**
     - **Validates: Requirements 4.3**
 
-  - [ ] 11.6 Write property test for bookmark persistence
+  - [x] 11.6 Write property test for bookmark persistence
     - **Property 11: Bookmark Persistence**
     - **Validates: Requirements 4.5**
 
