@@ -346,7 +346,7 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
     - **Copilot Prompt:** `Create Flutter HouseholdRepository with createHousehold(name) generating unique join_code using nanoid, joinHousehold(code) adding user to members array, leaveHousehold() removing user and clearing household_id`
     - _Requirements: 5.1, 5.2, 5.6_
 
-  - [ ] 15.2 Implement household receipt sync
+  - [x] 15.2 Implement household receipt sync
 
     - Query receipts by household_id
     - Real-time sync with StreamBuilder
