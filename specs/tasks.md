@@ -160,7 +160,7 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
     - **Property 3: Discount Field Consistency**
     - **Validates: Requirements 1.5**
 
-- [ ] 8. Checkpoint - Camera to API flow
+- [x] 8. Checkpoint - Camera to API flow
   - Test camera capture → upload → n8n → Firestore flow
   - Verify Receipt object parsing
   - Ensure all tests pass, ask the user if questions arise.
