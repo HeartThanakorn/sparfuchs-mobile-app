@@ -52,7 +52,7 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
     - **Copilot Prompt:** `Add error handling to GeminiScanService with retry logic, timeout handling, and user-friendly error messages in German`
     - _Requirements: 11.4_
 
-  - [ ] 2.4 Write property test for JSON validation
+  - [x] 2.4 Write property test for JSON validation
     - **Property 7: Receipt Serialization Round-Trip**
     - **Validates: Requirements 2.7, 11.1, 11.2, 11.3**
 
