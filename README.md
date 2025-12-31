@@ -1,114 +1,101 @@
-# SparFuchs AI - Smart Receipt Scanner & Expense Tracker 🦊
+# SparFuchs AI
 
-## 🚀 Project Overview
+A receipt scanning and expense tracking app for the German market. Built with Flutter and powered by Gemini 2.5 Flash for accurate German receipt parsing.
 
-SparFuchs AI is a Flutter-based mobile application designed to outperform existing solutions like "Bonsy" in the German market. It leverages AI (Gemini 3 Flash / GPT-4o) via self-hosted n8n workflows to parse German receipts with high accuracy, handling specific local nuances like "Pfand" (bottle deposits), dual VAT rates (7%/19%), and common OCR errors.
+## What it does
 
-**Target Market:** DACH Region (Germany, Austria, Switzerland)  
-**Languages:** German & English  
-**Currency:** Euro (€)
+SparFuchs AI takes a photo of your receipt and automatically extracts all the purchase data. It handles German-specific things like Pfand (bottle deposits), the two VAT rates (7% and 19%), and common OCR errors from receipt printers.
 
-## ✨ Key Features
+### Core functionality
 
-### Core Features (Bonsy Parity)
+- Camera-based receipt scanning with AI extraction
+- Expense dashboard with category breakdowns
+- Searchable receipt archive
+- Household sharing for couples/families
+- Inflation tracker (price history over time)
+- Recipe suggestions based on purchased groceries
+- Warranty and return deadline reminders
 
-- **AI Camera Scanner** - Instantly digitizes receipts from German supermarkets (Aldi, Lidl, Rewe, DM, Edeka, Penny, Netto, Kaufland)
-- **German-Specific Parsing** - Accurately separates **Pfand** (deposits) from line items with ♻️ visual indicators
-- **Expense Dashboard** - Monthly charts with category breakdown (Groceries, Household, Beverages, etc.)
-- **Digital Archive** - Searchable receipt storage with bookmarks
-- **Household Sharing** - Multi-user sync for couples/families
+## Tech stack
 
-### Killer Features (Differentiation)
+| Component | Technology |
+|-----------|------------|
+| Frontend | Flutter (Dart) with Riverpod |
+| AI | Gemini 2.5 Flash (direct API call) |
+| Database | Firestore |
+| Storage | Firebase Cloud Storage |
+| Auth | Firebase Authentication |
 
-- **🔥 Inflation Tracker** - Track product price history over time, compare across merchants
-- **🍳 Smart Recipe Suggestions** - AI suggests 3 recipes based on purchased groceries
-- **⏰ Warranty & Return Monitor** - Auto-detects electronics/clothing, sets 14-day return & 2-year warranty reminders
-
-## 🛠 Tech Stack
-
-| Layer         | Technology                                              |
-| ------------- | ------------------------------------------------------- |
-| **Frontend**  | Flutter (Dart) with Riverpod                            |
-| **Backend**   | n8n Workflows (Self-hosted on Hostinger VPS via Docker) |
-| **AI Engine** | Gemini 3 Flash (Google AI Studio) / GPT-4o fallback     |
-| **Database**  | Firestore (NoSQL)                                       |
-| **Storage**   | Firebase Cloud Storage                                  |
-| **Auth**      | Firebase Authentication                                 |
-
-## 📂 Architecture
+## Architecture
 
 ```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│   Flutter App   │────▶│  n8n Workflow   │────▶│   Gemini 3 AI   │
-│   (Client)      │     │  (Hostinger VPS)│     │   (Google API)  │
-└────────┬────────┘     └────────┬────────┘     └─────────────────┘
-         │                       │
-         ▼                       ▼
-┌─────────────────┐     ┌─────────────────┐
-│    Firestore    │◀────│  JSON Validator │
-│   (Real-time)   │     │   & Enricher    │
-└─────────────────┘     └─────────────────┘
+Flutter App  -->  Gemini 2.5 Flash API  -->  Firestore
+                      (direct call)
 ```
 
-This project follows **Clean Architecture** principles with feature-based folder structure.
+No backend server required. The app calls the Gemini API directly from Flutter, which keeps things simple and free.
 
-## 📋 Specification Documents
+## Project structure
 
-Complete project specifications are available in `.kiro/specs/sparfuchs-ai/`:
+```
+lib/
+  core/           # Shared models, utils, config
+  features/       # Feature-based modules
+    receipt/      # Scanning, archive, verification
+    dashboard/    # Expense charts and stats
+    household/    # Multi-user sharing
+    inflation/    # Price tracking
+    recipe/       # Recipe suggestions
+    warranty/     # Return/warranty reminders
+    gdpr/         # Data export and deletion
+```
 
-| Document                                                      | Description                                             |
-| ------------------------------------------------------------- | ------------------------------------------------------- |
-| [`requirements.md`](.kiro/specs/sparfuchs-ai/requirements.md) | 11 requirements with EARS-pattern acceptance criteria   |
-| [`design.md`](.kiro/specs/sparfuchs-ai/design.md)             | Technical design, Firestore schema, UI flows, AI prompt |
-| [`tasks.md`](.kiro/specs/sparfuchs-ai/tasks.md)               | 20 implementation tasks with Copilot prompts            |
+## Getting started
 
-## 🎨 Design System
-
-**Color Palette (Fintech-Inspired)**
-
-| Color          | Hex       | Usage                    |
-| -------------- | --------- | ------------------------ |
-| Primary Teal   | `#4ECDC4` | Primary actions, headers |
-| Dark Navy      | `#2C3E50` | Text, icons              |
-| Light Mint     | `#E8F8F5` | Backgrounds              |
-| Success Green  | `#27AE60` | Savings, positive        |
-| Warning Orange | `#F39C12` | Alerts                   |
-| Error Red      | `#E74C3C` | Errors, price increases  |
-
-**Typography:** Poppins (Headlines), Inter (Body), SF Mono (Numbers)
-
-## 🚦 Getting Started
-
-### Prerequisites
+### Requirements
 
 - Flutter SDK 3.x
-- Firebase CLI
-- Docker & Docker Compose (for VPS)
-- Google AI Studio API key (Gemini 3 Flash)
+- A Gemini API key from Google AI Studio
 
-### Installation
+### Setup
 
 ```bash
-# Clone repository
-git clone https://github.com/your-org/sparfuchs-ai.git
-cd sparfuchs-ai
+git clone https://github.com/HeartThanakorn/sparfuchs-mobile-app.git
+cd sparfuchs-mobile-app
 
-# Install dependencies
 flutter pub get
 
-# Configure Firebase
-flutterfire configure
+# Create .env file with your API key
+cp .env.example .env
+# Edit .env and add your GEMINI_API_KEY
 
-# Run app
 flutter run
 ```
 
-## 📄 License
+For release builds, pass the API key at compile time:
 
-Copyright © 2025 Thanakorn Thajan. All rights reserved.
+```bash
+flutter build apk --dart-define=GEMINI_API_KEY=your_key_here
+```
 
-This project is proprietary software. Unauthorized copying, modification, distribution, or use of this file and the source code, via any medium, is strictly prohibited.
+## Testing
 
-## 🤝 Contributing
+```bash
+flutter test
+```
 
-See `.specs/tasks.md` for the implementation roadmap.
+Currently has 187 tests covering receipt parsing, household membership, search/filter, GDPR compliance, and more.
+
+## Specs
+
+The full specification documents are in `specs/`:
+
+- `requirements.md` - Feature requirements
+- `design.md` - Technical design and data models
+- `tasks.md` - Implementation checklist
+
+## License
+
+Copyright 2025 Thanakorn Thajan. All rights reserved.
+
+Proprietary software. Do not copy, modify, or distribute without permission.
