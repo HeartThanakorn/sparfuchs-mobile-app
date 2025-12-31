@@ -421,7 +421,7 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
     - **Copilot Prompt:** `Create Flutter WarrantyListScreen showing warranty_items with item_description, days remaining until return_deadline and warranty_expiry, SwipeAction to mark as returned updating status to 'returned'`
     - _Requirements: 8.5, 8.6_
 
-  - [ ] 17.3 Implement push notification reminders
+  - [x] 17.3 Implement push notification reminders
 
     - Schedule local notifications 3 days before deadlines
     - **Copilot Prompt:** `Create Flutter WarrantyNotificationService using flutter_local_notifications to schedule notification 3 days before return_deadline and warranty_expiry dates`
