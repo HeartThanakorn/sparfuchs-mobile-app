@@ -1,0 +1,126 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ============================================
+    // HELPER FUNCTIONS
+    // ============================================
+    
+    // Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Check if the user owns the document
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Check if user is a member of the household
+    function isHouseholdMember(householdId) {
+      return isAuthenticated() && 
+        exists(/databases/$(database)/documents/households/$(householdId)) &&
+        request.auth.uid in get(/databases/$(database)/documents/households/$(householdId)).data.memberIds;
+    }
+    
+    // Check if user is household owner
+    function isHouseholdOwner(householdId) {
+      return isAuthenticated() && 
+        exists(/databases/$(database)/documents/households/$(householdId)) &&
+        request.auth.uid == get(/databases/$(database)/documents/households/$(householdId)).data.ownerId;
+    }
+    
+    // ============================================
+    // USERS COLLECTION
+    // ============================================
+    match /users/{userId} {
+      // Users can read/write their own profile
+      allow read, write: if isOwner(userId);
+    }
+    
+    // ============================================
+    // USER SETTINGS COLLECTION
+    // ============================================
+    match /user_settings/{userId} {
+      // Users can read/write their own settings
+      allow read, write: if isOwner(userId);
+    }
+    
+    // ============================================
+    // HOUSEHOLDS COLLECTION
+    // ============================================
+    match /households/{householdId} {
+      // Members can read household
+      allow read: if isHouseholdMember(householdId);
+      
+      // Only owner can update/delete household
+      allow update, delete: if isHouseholdOwner(householdId);
+      
+      // Any authenticated user can create a household
+      allow create: if isAuthenticated() && 
+        request.resource.data.ownerId == request.auth.uid &&
+        request.auth.uid in request.resource.data.memberIds;
+    }
+    
+    // ============================================
+    // RECEIPTS COLLECTION
+    // ============================================
+    match /receipts/{receiptId} {
+      // User can read their own receipts OR household member receipts
+      allow read: if isOwner(resource.data.userId) || 
+        (resource.data.householdId != null && isHouseholdMember(resource.data.householdId));
+      
+      // User can create receipts for themselves
+      allow create: if isAuthenticated() && 
+        request.resource.data.userId == request.auth.uid;
+      
+      // User can update/delete their own receipts
+      allow update, delete: if isOwner(resource.data.userId);
+    }
+    
+    // ============================================
+    // WARRANTY ITEMS COLLECTION
+    // ============================================
+    match /warranty_items/{itemId} {
+      // User can read/write their own warranty items
+      allow read, write: if isOwner(resource.data.userId);
+      
+      // User can create warranty items for themselves
+      allow create: if isAuthenticated() && 
+        request.resource.data.userId == request.auth.uid;
+    }
+    
+    // ============================================
+    // PRODUCTS COLLECTION (Price Tracking)
+    // ============================================
+    match /products/{productId} {
+      // Anyone authenticated can read products (shared price data)
+      allow read: if isAuthenticated();
+      
+      // Anyone authenticated can create products
+      allow create: if isAuthenticated();
+      
+      // Anyone authenticated can update price_history
+      allow update: if isAuthenticated();
+      
+      // No one can delete products
+      allow delete: if false;
+    }
+    
+    // ============================================
+    // INVITE CODES COLLECTION
+    // ============================================
+    match /invite_codes/{code} {
+      // Anyone authenticated can read invite codes (to join household)
+      allow read: if isAuthenticated();
+      
+      // Only household owners can create/delete invite codes
+      allow create: if isAuthenticated() && 
+        isHouseholdOwner(request.resource.data.householdId);
+      
+      allow delete: if isAuthenticated() && 
+        isHouseholdOwner(resource.data.householdId);
+    }
+  }
+}

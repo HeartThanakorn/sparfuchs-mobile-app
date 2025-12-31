@@ -35,7 +35,7 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
 
 - [ ] 2. Configure Firebase infrastructure
 
-  - [ ] 2.1 Set up Firestore security rules
+  - [x] 2.1 Set up Firestore security rules
 
     - Create rules for users, households, receipts, products, warranty_items collections
     - Implement household-based access control
