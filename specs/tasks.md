@@ -384,9 +384,9 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
     - **Property 16: Household Leave Data Isolation**
     - **Validates: Requirements 5.6**
 
-- [ ] 16. Implement Recipe Suggestions
+- [x] 16. Implement Recipe Suggestions
 
-  - [ ] 16.1 Create RecipeService
+  - [x] 16.1 Create RecipeService
 
     - Extract food items from receipt
     - Call recipe API (or n8n workflow)
