@@ -458,7 +458,7 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
     - **Copilot Prompt:** `Create Flutter DataExportService that queries all user's receipts, households, warranty_items from Firestore and exports as downloadable JSON file`
     - _Requirements: 9.4_
 
-  - [ ] 19.2 Create account deletion functionality
+  - [x] 19.2 Create account deletion functionality
     - Delete all user data from Firestore and Storage
     - **Copilot Prompt:** `Create Flutter AccountDeletionService that deletes all documents where user_id matches, removes user from household members, deletes Storage files, and finally deletes Firebase Auth account`
     - _Requirements: 9.5_
