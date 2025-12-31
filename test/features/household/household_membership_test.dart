@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sparfuchs_ai/features/household/data/repositories/household_repository.dart';
 
 /// Property 13: Household Membership After Join
 /// Validates: Requirements 5.2
