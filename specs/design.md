@@ -2,7 +2,7 @@
 
 ## Overview
 
-SparFuchs AI is a Flutter-based mobile application for the German market that uses AI-powered receipt scanning to digitize expenses. The system employs a self-hosted hybrid architecture where AI processing occurs on an n8n workflow hosted on a Hostinger VPS (Dockerized), while Firestore handles real-time mobile sync. This design ensures GDPR compliance through data control while maintaining responsive user experience.
+SparFuchs AI is a Flutter-based mobile application for the German market that uses AI-powered receipt scanning to digitize expenses. The system employs a serverless architecture where AI processing calls Gemini 2.5 Flash API directly from Flutter, while Firestore handles real-time mobile sync. This design ensures GDPR compliance through Firebase's EU data centers while maintaining responsive user experience.
 
 The app differentiates from competitors through three killer features: Inflation Tracker (price history), Smart Recipe Suggestions, and Warranty/Return Monitoring.
 
@@ -14,29 +14,25 @@ The app differentiates from competitors through three killer features: Inflation
 sequenceDiagram
     participant User
     participant Flutter as Flutter App
-    participant VPS as n8n Workflow<br/>(Hostinger VPS)
-    participant AI as OpenAI API<br/>(GPT-4o)
+    participant AI as Gemini 2.5 Flash API
     participant Storage as Cloud Storage<br/>(Image)
     participant DB as Firestore
 
     User->>Flutter: 1. Capture Receipt Photo
-    Flutter->>Storage: 2. Upload Image
-    Storage-->>Flutter: 3. Return Image URL
-    Flutter->>VPS: 4. POST /webhook/scan-receipt<br/>{image_url, user_id}
-
-    Note over VPS: Heavy Lifting on VPS
-    VPS->>AI: 5. Send Image + System Prompt
-    AI-->>VPS: 6. Return Parsed JSON
-    VPS->>VPS: 7. Validate & Enrich JSON<br/>(Add confidence, timestamps)
-    VPS->>DB: 8. Store Receipt Document
-    VPS-->>Flutter: 9. Return receipt_data
-
-    Flutter->>User: 10. Display Verification Screen
-    User->>Flutter: 11. Confirm/Edit Data
-    Flutter->>DB: 12. Update Receipt (if edited)
+    Flutter->>Storage: 2. Upload Image (optional backup)
+    
+    Note over Flutter,AI: Direct API Call from Flutter
+    Flutter->>AI: 3. Send Base64 Image + Prompt
+    AI-->>Flutter: 4. Return Parsed JSON
+    Flutter->>Flutter: 5. Validate & Parse JSON
+    Flutter->>DB: 6. Store Receipt Document
+    
+    Flutter->>User: 7. Display Verification Screen
+    User->>Flutter: 8. Confirm/Edit Data
+    Flutter->>DB: 9. Update Receipt (if edited)
 
     Note over DB,Flutter: Real-time Sync
-    DB-->>Flutter: 13. Sync to Household Members
+    DB-->>Flutter: 10. Sync to Household Members
 ```
 
 ### Component Architecture
@@ -46,19 +42,13 @@ graph TB
     subgraph "Flutter App (Client)"
         CAM[Camera Module]
         UI[UI Layer]
+        GEMINI[GeminiScanService]
         SYNC[Firestore Sync]
         LOCAL[Local Cache]
     end
 
-    subgraph "Hostinger VPS (Docker)"
-        N8N[n8n Workflow Engine]
-        WEBHOOK[Webhook Endpoint]
-        VALIDATOR[JSON Validator]
-        ENRICHER[Data Enricher]
-    end
-
     subgraph "External Services"
-        GPT[GPT-4o API]
+        AI[Gemini 2.5 Flash API]
         RECIPE[Recipe API]
     end
 
@@ -68,17 +58,14 @@ graph TB
         AUTH[Firebase Auth]
     end
 
-    CAM --> STORAGE
+    CAM --> GEMINI
+    GEMINI --> AI
+    AI --> GEMINI
+    GEMINI --> UI
     UI --> SYNC
     SYNC <--> FS
     LOCAL <--> SYNC
-
-    WEBHOOK --> N8N
-    N8N --> GPT
-    N8N --> VALIDATOR
-    VALIDATOR --> ENRICHER
-    ENRICHER --> FS
-    N8N --> RECIPE
+    CAM --> STORAGE
 ```
 
 ## Components and Interfaces
@@ -94,36 +81,40 @@ graph TB
 | `WarrantyService`     | Manage return/warranty reminders           | `trackItem(item)`, `getUpcomingReminders()`                 |
 | `RecipeService`       | Fetch recipe suggestions                   | `suggestRecipes(ingredients[])`                             |
 
-### 2. n8n Workflow Endpoints
+### 2. GeminiScanService (AI Integration)
 
-| Endpoint                   | Method | Purpose                                |
-| -------------------------- | ------ | -------------------------------------- |
-| `/webhook/scan-receipt`    | POST   | Process receipt image via AI           |
-| `/webhook/suggest-recipes` | POST   | Get recipe suggestions for ingredients |
-| `/webhook/health`          | GET    | VPS health check                       |
+| Method                | Purpose                                |
+| --------------------- | -------------------------------------- |
+| `scanReceipt(image)`  | Process receipt image via Gemini API   |
+| `parseResponse(json)` | Parse AI response into ReceiptData     |
 
-### 3. API Contracts
+### 3. API Contract
 
-#### Scan Receipt Request
+#### Gemini API Request (from Flutter)
 
 ```dart
-// POST /webhook/scan-receipt
-{
-  "image_url": "https://storage.googleapis.com/...",
-  "user_id": "uid_123",
-  "household_id": "hh_456",  // optional
-  "language": "de"
-}
+// Direct call to Gemini 2.5 Flash API
+final response = await http.post(
+  Uri.parse('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent'),
+  headers: {'Content-Type': 'application/json'},
+  body: jsonEncode({
+    'contents': [{
+      'parts': [
+        {'inline_data': {'mime_type': 'image/jpeg', 'data': base64Image}},
+        {'text': systemPrompt}
+      ]
+    }]
+  }),
+);
 ```
 
-#### Scan Receipt Response
+#### Parsed Response (ReceiptData)
 
 ```dart
 // Returns the full receipt_data JSON as defined in Requirements 11
 {
   "success": true,
   "receipt_data": { ... },  // Full schema
-  "receipt_id": "rec_789"
 }
 ```
 

@@ -7,7 +7,7 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
 **Tech Stack:**
 
 - Frontend: Flutter (Dart)
-- AI: Gemini 1.5 Flash (Google AI Studio API - direct call from Flutter)
+- AI: Gemini 2.5 Flash (Google AI Studio API - direct call from Flutter)
 - Database: Firestore
 - Storage: Firebase Cloud Storage
 
@@ -32,10 +32,10 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
 
   - [ ] 2.1 Implement GeminiScanService class
 
-    - Call Gemini 1.5 Flash API directly from Flutter
+    - Call Gemini 2.5 Flash API directly from Flutter
     - Send base64 image with receipt parsing prompt
     - Parse JSON response into ReceiptData
-    - **Copilot Prompt:** `Create Flutter GeminiScanService with scanReceipt(File image) that calls Gemini 1.5 Flash API with base64 image, returns parsed ReceiptData`
+    - **Copilot Prompt:** `Create Flutter GeminiScanService with scanReceipt(File image) that calls Gemini 2.5 Flash API with base64 image, returns parsed ReceiptData`
     - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.8_
 
   - [ ] 2.2 Implement API key security

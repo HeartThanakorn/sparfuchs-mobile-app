@@ -2,12 +2,12 @@
 
 ## Introduction
 
-SparFuchs AI is a German receipt scanning and expense tracking mobile application targeting the DACH region. The app uses AI-powered multimodal scanning (GPT-4o/Claude 3.5 Sonnet) to extract structured data from German receipts, with special handling for German-specific elements like Pfand (bottle deposits), VAT rates (7%/19%), and common retailer formats (Aldi, Lidl, Rewe, DM). The app differentiates from competitors like "Bonsy Bon Scan" through killer features: Inflation Tracker, Smart Recipe Suggestions, and Warranty/Return Monitoring.
+SparFuchs AI is a German receipt scanning and expense tracking mobile application targeting the DACH region. The app uses AI-powered multimodal scanning (Gemini 2.5 Flash) to extract structured data from German receipts, with special handling for German-specific elements like Pfand (bottle deposits), VAT rates (7%/19%), and common retailer formats (Aldi, Lidl, Rewe, DM). The app differentiates from competitors like "Bonsy Bon Scan" through killer features: Inflation Tracker, Smart Recipe Suggestions, and Warranty/Return Monitoring.
 
 ## Glossary
 
 - **SparFuchs_App**: The mobile application built with Flutter (Dart) for iOS and Android
-- **AI_Scanner**: The multimodal AI engine (GPT-4o or Claude 3.5 Sonnet) that processes receipt images
+- **AI_Scanner**: The multimodal AI engine (Gemini 2.5 Flash) that processes receipt images
 - **Receipt_Parser**: The component that converts AI output into structured Receipt data
 - **Expense_Dashboard**: The analytics view showing spending charts and category breakdowns
 - **Receipt_Archive**: The searchable digital storage for receipt images and extracted data
