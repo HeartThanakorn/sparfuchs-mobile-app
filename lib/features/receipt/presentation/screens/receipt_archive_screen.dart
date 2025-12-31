@@ -3,8 +3,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:sparfuchs_ai/core/constants/app_constants.dart';
 import 'package:sparfuchs_ai/core/models/receipt.dart';
+import 'package:sparfuchs_ai/features/receipt/data/repositories/receipt_repository.dart';
 
-/// Receipt Archive Screen showing all receipts sorted by date
+/// Provider for ReceiptRepository
+final receiptRepositoryProvider = Provider<ReceiptRepository>((ref) {
+  return ReceiptRepository();
+});
+
+/// Provider for receipts stream
+final receiptsStreamProvider = StreamProvider<List<Receipt>>((ref) {
+  final repository = ref.watch(receiptRepositoryProvider);
+  return repository.watchReceipts();
+});
+
+/// Receipt Archive Screen with real Firestore data
 class ReceiptArchiveScreen extends ConsumerStatefulWidget {
   const ReceiptArchiveScreen({super.key});
 
@@ -14,86 +26,17 @@ class ReceiptArchiveScreen extends ConsumerStatefulWidget {
 }
 
 class _ReceiptArchiveScreenState extends ConsumerState<ReceiptArchiveScreen> {
-  /// German date/time formatters
   static final _dateFormat = DateFormat('dd.MM.yyyy', 'de_DE');
-  static final _timeFormat = DateFormat('HH:mm', 'de_DE');
   static final _currencyFormat = NumberFormat.currency(
     locale: 'de_DE',
     symbol: '€',
     decimalDigits: 2,
   );
 
-  // TODO: Replace with actual Firestore stream from ReceiptRepository
-  List<Receipt> _mockReceipts = [];
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadReceipts();
-  }
-
-  Future<void> _loadReceipts() async {
-    // Simulate loading
-    await Future.delayed(const Duration(milliseconds: 500));
-    setState(() {
-      _mockReceipts = _generateMockReceipts();
-      _isLoading = false;
-    });
-  }
-
-  List<Receipt> _generateMockReceipts() {
-    // TODO: Replace with actual Firestore data
-    return [
-      _createMockReceipt('1', 'REWE', '2024-12-30', '14:30:00', 45.67),
-      _createMockReceipt('2', 'Aldi Süd', '2024-12-29', '10:15:00', 32.45),
-      _createMockReceipt('3', 'Lidl', '2024-12-28', '16:45:00', 28.90),
-      _createMockReceipt('4', 'Edeka', '2024-12-27', '11:20:00', 67.23),
-      _createMockReceipt('5', 'REWE', '2024-12-25', '09:30:00', 89.12),
-    ];
-  }
-
-  Receipt _createMockReceipt(
-    String id,
-    String merchant,
-    String date,
-    String time,
-    double total,
-  ) {
-    return Receipt(
-      receiptId: id,
-      userId: 'user_1',
-      householdId: 'household_1',
-      imageUrl: 'https://example.com/receipts/$id.jpg',
-      isBookmarked: id == '2', // One bookmarked for demo
-      receiptData: ReceiptData(
-        merchant: Merchant(name: merchant),
-        transaction: Transaction(
-          date: date,
-          time: time,
-          currency: 'EUR',
-          paymentMethod: 'CARD',
-        ),
-        items: const [],
-        totals: Totals(
-          subtotal: total * 0.93,
-          pfandTotal: 0.25,
-          taxAmount: total * 0.07,
-          grandTotal: total,
-        ),
-        taxes: const [],
-        aiMetadata: const AiMetadata(
-          confidenceScore: 0.95,
-          modelUsed: 'gemini-1.5-flash',
-        ),
-      ),
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    final receiptsAsync = ref.watch(receiptsStreamProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Belegarchiv'),
@@ -107,17 +50,45 @@ class _ReceiptArchiveScreenState extends ConsumerState<ReceiptArchiveScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.filter_list),
-            onPressed: () {
-              _showFilterSheet(context);
-            },
+            onPressed: () => _showFilterSheet(context),
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _mockReceipts.isEmpty
-              ? _buildEmptyState()
-              : _buildReceiptList(),
+      body: receiptsAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stack) => _buildErrorState(error.toString()),
+        data: (receipts) => receipts.isEmpty
+            ? _buildEmptyState()
+            : _buildReceiptList(receipts),
+      ),
+    );
+  }
+
+  Widget _buildErrorState(String error) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.error_outline,
+            size: 64,
+            color: const Color(AppColors.errorRed),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Fehler beim Laden',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            error,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: const Color(AppColors.neutralGray),
+                ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
     );
   }
 
@@ -150,9 +121,8 @@ class _ReceiptArchiveScreenState extends ConsumerState<ReceiptArchiveScreen> {
     );
   }
 
-  Widget _buildReceiptList() {
-    // Group receipts by date
-    final groupedReceipts = _groupReceiptsByDate(_mockReceipts);
+  Widget _buildReceiptList(List<Receipt> receipts) {
+    final groupedReceipts = _groupReceiptsByDate(receipts);
 
     return ListView.builder(
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -162,8 +132,6 @@ class _ReceiptArchiveScreenState extends ConsumerState<ReceiptArchiveScreen> {
         return _ReceiptDateGroup(
           dateLabel: entry.key,
           receipts: entry.value,
-          dateFormat: _dateFormat,
-          timeFormat: _timeFormat,
           currencyFormat: _currencyFormat,
           onReceiptTap: _onReceiptTap,
           onBookmarkTap: _onBookmarkTap,
@@ -203,22 +171,14 @@ class _ReceiptArchiveScreenState extends ConsumerState<ReceiptArchiveScreen> {
   }
 
   void _onReceiptTap(Receipt receipt) {
-    // TODO: Navigate to VerificationScreen
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Öffne Beleg: ${receipt.receiptData.merchant.name}')),
     );
   }
 
-  void _onBookmarkTap(Receipt receipt) {
-    setState(() {
-      // Toggle bookmark (mock - in real app, update Firestore)
-      final index = _mockReceipts.indexWhere((r) => r.receiptId == receipt.receiptId);
-      if (index != -1) {
-        _mockReceipts[index] = receipt.copyWith(
-          isBookmarked: !receipt.isBookmarked,
-        );
-      }
-    });
+  void _onBookmarkTap(Receipt receipt) async {
+    final repository = ref.read(receiptRepositoryProvider);
+    await repository.toggleBookmark(receipt.receiptId, !receipt.isBookmarked);
   }
 
   void _showFilterSheet(BuildContext context) {
@@ -230,10 +190,7 @@ class _ReceiptArchiveScreenState extends ConsumerState<ReceiptArchiveScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Filter',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
+            Text('Filter', style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 16),
             ListTile(
               leading: const Icon(Icons.bookmark),
@@ -246,12 +203,6 @@ class _ReceiptArchiveScreenState extends ConsumerState<ReceiptArchiveScreen> {
               trailing: const Icon(Icons.chevron_right),
               onTap: () {},
             ),
-            ListTile(
-              leading: const Icon(Icons.store),
-              title: const Text('Nach Händler'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {},
-            ),
           ],
         ),
       ),
@@ -259,12 +210,9 @@ class _ReceiptArchiveScreenState extends ConsumerState<ReceiptArchiveScreen> {
   }
 }
 
-/// Group of receipts for a specific date
 class _ReceiptDateGroup extends StatelessWidget {
   final String dateLabel;
   final List<Receipt> receipts;
-  final DateFormat dateFormat;
-  final DateFormat timeFormat;
   final NumberFormat currencyFormat;
   final void Function(Receipt) onReceiptTap;
   final void Function(Receipt) onBookmarkTap;
@@ -272,8 +220,6 @@ class _ReceiptDateGroup extends StatelessWidget {
   const _ReceiptDateGroup({
     required this.dateLabel,
     required this.receipts,
-    required this.dateFormat,
-    required this.timeFormat,
     required this.currencyFormat,
     required this.onReceiptTap,
     required this.onBookmarkTap,
@@ -284,7 +230,6 @@ class _ReceiptDateGroup extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Date header
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Text(
@@ -295,10 +240,8 @@ class _ReceiptDateGroup extends StatelessWidget {
                 ),
           ),
         ),
-        // Receipt tiles
         ...receipts.map((receipt) => _ReceiptTile(
               receipt: receipt,
-              timeFormat: timeFormat,
               currencyFormat: currencyFormat,
               onTap: () => onReceiptTap(receipt),
               onBookmarkTap: () => onBookmarkTap(receipt),
@@ -308,17 +251,14 @@ class _ReceiptDateGroup extends StatelessWidget {
   }
 }
 
-/// Individual receipt tile
 class _ReceiptTile extends StatelessWidget {
   final Receipt receipt;
-  final DateFormat timeFormat;
   final NumberFormat currencyFormat;
   final VoidCallback onTap;
   final VoidCallback onBookmarkTap;
 
   const _ReceiptTile({
     required this.receipt,
-    required this.timeFormat,
     required this.currencyFormat,
     required this.onTap,
     required this.onBookmarkTap,
@@ -330,7 +270,6 @@ class _ReceiptTile extends StatelessWidget {
     final transaction = receipt.receiptData.transaction;
     final totals = receipt.receiptData.totals;
 
-    // Parse time for display
     String timeStr = transaction.time;
     final timeParts = timeStr.split(':');
     if (timeParts.length >= 2) {
@@ -348,11 +287,8 @@ class _ReceiptTile extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           child: Row(
             children: [
-              // Merchant avatar/icon
               _MerchantAvatar(merchantName: merchant.name),
               const SizedBox(width: 12),
-
-              // Merchant & time info
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -367,38 +303,26 @@ class _ReceiptTile extends StatelessWidget {
                     const SizedBox(height: 2),
                     Row(
                       children: [
-                        Icon(
-                          Icons.access_time,
-                          size: 14,
-                          color: const Color(AppColors.neutralGray),
-                        ),
+                        Icon(Icons.access_time, size: 14,
+                            color: const Color(AppColors.neutralGray)),
                         const SizedBox(width: 4),
-                        Text(
-                          timeStr,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: const Color(AppColors.neutralGray),
-                              ),
-                        ),
+                        Text(timeStr,
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: const Color(AppColors.neutralGray),
+                                )),
                         const SizedBox(width: 12),
-                        Icon(
-                          Icons.credit_card,
-                          size: 14,
-                          color: const Color(AppColors.neutralGray),
-                        ),
+                        Icon(Icons.credit_card, size: 14,
+                            color: const Color(AppColors.neutralGray)),
                         const SizedBox(width: 4),
-                        Text(
-                          transaction.paymentMethod,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: const Color(AppColors.neutralGray),
-                              ),
-                        ),
+                        Text(transaction.paymentMethod,
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: const Color(AppColors.neutralGray),
+                                )),
                       ],
                     ),
                   ],
                 ),
               ),
-
-              // Amount & bookmark
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -413,9 +337,7 @@ class _ReceiptTile extends StatelessWidget {
                   GestureDetector(
                     onTap: onBookmarkTap,
                     child: Icon(
-                      receipt.isBookmarked
-                          ? Icons.bookmark
-                          : Icons.bookmark_border,
+                      receipt.isBookmarked ? Icons.bookmark : Icons.bookmark_border,
                       size: 20,
                       color: receipt.isBookmarked
                           ? const Color(AppColors.warningOrange)
@@ -432,7 +354,6 @@ class _ReceiptTile extends StatelessWidget {
   }
 }
 
-/// Merchant avatar with first letter
 class _MerchantAvatar extends StatelessWidget {
   final String merchantName;
 

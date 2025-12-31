@@ -2,6 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:sparfuchs_ai/core/constants/app_constants.dart';
+import 'package:sparfuchs_ai/features/inflation/data/repositories/product_repository.dart';
+
+// Providers
+final productRepositoryProvider = Provider<ProductRepository>((ref) {
+  return ProductRepository();
+});
+
+final trackedProductsStreamProvider = StreamProvider<List<TrackedProduct>>((ref) {
+  final repository = ref.watch(productRepositoryProvider);
+  return repository.watchTrackedProducts();
+});
+
+final trendingProductsFutureProvider = FutureProvider<List<TrackedProduct>>((ref) async {
+  final repository = ref.read(productRepositoryProvider);
+  return repository.getTrendingProducts();
+});
 
 /// Screen for tracking product price changes/inflation
 class InflationTrackerScreen extends ConsumerStatefulWidget {
@@ -16,55 +32,6 @@ class _InflationTrackerScreenState
     extends ConsumerState<InflationTrackerScreen> {
   final TextEditingController _searchController = TextEditingController();
   
-  // TODO: Replace with actual data from repository
-  final List<_MockProductTrend> _trendingProducts = [
-    _MockProductTrend(
-      name: 'Kerrygold Butter',
-      currentPrice: 3.19,
-      previousPrice: 2.29,
-      changePercentage: 39.3,
-      store: 'REWE',
-    ),
-    _MockProductTrend(
-      name: 'Barilla Pasta',
-      currentPrice: 1.89,
-      previousPrice: 1.39,
-      changePercentage: 35.9,
-      store: 'Edeka',
-    ),
-    _MockProductTrend(
-      name: 'Bio Milch 3.8%',
-      currentPrice: 1.45,
-      previousPrice: 1.15,
-      changePercentage: 26.1,
-      store: 'Aldi',
-    ),
-  ];
-
-  final List<_MockProductTrend> _trackedProducts = [
-    _MockProductTrend(
-      name: 'Coca Cola 1.5L',
-      currentPrice: 1.79,
-      previousPrice: 1.79,
-      changePercentage: 0.0,
-      store: 'Lidl',
-    ),
-    _MockProductTrend(
-      name: 'Nutella 450g',
-      currentPrice: 2.99,
-      previousPrice: 3.29,
-      changePercentage: -9.1,
-      store: 'REWE',
-    ),
-     _MockProductTrend(
-      name: 'H-Milch 1.5%',
-      currentPrice: 0.99,
-      previousPrice: 0.95,
-      changePercentage: 4.2,
-      store: 'Aldi',
-    ),
-  ];
-
   @override
   void dispose() {
     _searchController.dispose();
@@ -73,6 +40,10 @@ class _InflationTrackerScreenState
 
   @override
   Widget build(BuildContext context) {
+    // Watch providers
+    final trendingAsync = ref.watch(trendingProductsFutureProvider);
+    final trackedAsync = ref.watch(trackedProductsStreamProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Inflations-Tracker'),
@@ -123,14 +94,20 @@ class _InflationTrackerScreenState
           SliverToBoxAdapter(
             child: SizedBox(
               height: 160,
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                scrollDirection: Axis.horizontal,
-                itemCount: _trendingProducts.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 12),
-                itemBuilder: (context, index) {
-                  return _TrendingProductCard(product: _trendingProducts[index]);
-                },
+              child: trendingAsync.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (err, stack) => _buildErrorCard(err.toString()),
+                data: (products) => products.isEmpty
+                    ? _buildEmptyState('Keine Daten')
+                    : ListView.separated(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        scrollDirection: Axis.horizontal,
+                        itemCount: products.length,
+                        separatorBuilder: (_, __) => const SizedBox(width: 12),
+                        itemBuilder: (context, index) {
+                          return _TrendingProductCard(product: products[index]);
+                        },
+                      ),
               ),
             ),
           ),
@@ -149,13 +126,25 @@ class _InflationTrackerScreenState
           ),
 
           // Tracked Products List (Vertical)
-          SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                return _TrackedProductTile(product: _trackedProducts[index]);
-              },
-              childCount: _trackedProducts.length,
+          trackedAsync.when(
+            loading: () => const SliverFillRemaining(
+              child: Center(child: CircularProgressIndicator()),
             ),
+            error: (err, stack) => SliverFillRemaining(
+              child: Center(child: Text('Fehler: $err')),
+            ),
+            data: (products) => products.isEmpty
+                ? const SliverFillRemaining(
+                    child: Center(child: Text('Noch keine Produkte getrackt')),
+                  )
+                : SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        return _TrackedProductTile(product: products[index]);
+                      },
+                      childCount: products.length,
+                    ),
+                  ),
           ),
           
           const SliverPadding(padding: EdgeInsets.only(bottom: 24)),
@@ -163,28 +152,19 @@ class _InflationTrackerScreenState
       ),
     );
   }
-}
 
-/// Mock model for UI development
-class _MockProductTrend {
-  final String name;
-  final double currentPrice;
-  final double previousPrice;
-  final double changePercentage;
-  final String store;
+  Widget _buildErrorCard(String error) {
+    return Center(child: Text('Fehler beim Laden', style: Theme.of(context).textTheme.bodySmall));
+  }
 
-  _MockProductTrend({
-    required this.name,
-    required this.currentPrice,
-    required this.previousPrice,
-    required this.changePercentage,
-    required this.store,
-  });
+  Widget _buildEmptyState(String message) {
+     return Center(child: Text(message, style: Theme.of(context).textTheme.bodyMedium));
+  }
 }
 
 /// Card for highly trending items
 class _TrendingProductCard extends StatelessWidget {
-  final _MockProductTrend product;
+  final TrackedProduct product;
 
   const _TrendingProductCard({required this.product});
 
@@ -232,7 +212,7 @@ class _TrendingProductCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  '+${product.changePercentage.toStringAsFixed(1)}%',
+                  '+${product.priceChangePercent.toStringAsFixed(1)}%',
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: const Color(AppColors.errorRed),
                         fontWeight: FontWeight.bold,
@@ -254,7 +234,7 @@ class _TrendingProductCard extends StatelessWidget {
           const SizedBox(height: 4),
           // Price
           Text(
-            _currencyFormat.format(product.currentPrice),
+            _currencyFormat.format(product.latestPrice),
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: const Color(AppColors.darkNavy),
@@ -262,12 +242,13 @@ class _TrendingProductCard extends StatelessWidget {
           ),
           const SizedBox(height: 2),
           // Store
-          Text(
-            product.store,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: const Color(AppColors.neutralGray),
-                ),
-          ),
+          if (product.latestMerchant != null)
+            Text(
+              product.latestMerchant!,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: const Color(AppColors.neutralGray),
+                  ),
+            ),
         ],
       ),
     );
@@ -276,7 +257,7 @@ class _TrendingProductCard extends StatelessWidget {
 
 /// Tile for standard tracked products list
 class _TrackedProductTile extends StatelessWidget {
-  final _MockProductTrend product;
+  final TrackedProduct product;
 
   const _TrackedProductTile({required this.product});
 
@@ -286,14 +267,14 @@ class _TrackedProductTile extends StatelessWidget {
   );
 
   Color get _trendColor {
-    if (product.changePercentage > 0) return const Color(AppColors.errorRed);
-    if (product.changePercentage < 0) return const Color(AppColors.successGreen);
+    if (product.priceChangePercent > 0) return const Color(AppColors.errorRed);
+    if (product.priceChangePercent < 0) return const Color(AppColors.successGreen);
     return const Color(AppColors.neutralGray);
   }
 
   IconData get _trendIcon {
-    if (product.changePercentage > 0) return Icons.arrow_upward;
-    if (product.changePercentage < 0) return Icons.arrow_downward;
+    if (product.priceChangePercent > 0) return Icons.arrow_upward;
+    if (product.priceChangePercent < 0) return Icons.arrow_downward;
     return Icons.remove;
   }
 
@@ -319,7 +300,7 @@ class _TrackedProductTile extends StatelessWidget {
           ),
           child: Center(
             child: Text(
-              product.name[0].toUpperCase(),
+              product.name.isNotEmpty ? product.name[0].toUpperCase() : '?',
               style: const TextStyle(
                 color: Color(AppColors.primaryTeal),
                 fontWeight: FontWeight.bold,
@@ -332,13 +313,13 @@ class _TrackedProductTile extends StatelessWidget {
           product.name,
           style: const TextStyle(fontWeight: FontWeight.w600),
         ),
-        subtitle: Text(product.store),
+        subtitle: product.latestMerchant != null ? Text(product.latestMerchant!) : null,
         trailing: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text(
-              _currencyFormat.format(product.currentPrice),
+              _currencyFormat.format(product.latestPrice),
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
@@ -354,9 +335,9 @@ class _TrackedProductTile extends StatelessWidget {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  product.changePercentage == 0
+                  product.priceChangePercent == 0
                       ? 'Stabil'
-                      : '${product.changePercentage.abs().toStringAsFixed(1)}%',
+                      : '${product.priceChangePercent.abs().toStringAsFixed(1)}%',
                   style: TextStyle(
                     color: _trendColor,
                     fontSize: 12,

@@ -1,53 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:sparfuchs_ai/features/warranty/data/services/warranty_service.dart';
+import 'package:sparfuchs_ai/features/warranty/data/repositories/warranty_repository.dart';
 import 'package:sparfuchs_ai/shared/theme/app_theme.dart';
 
+// Providers
+final warrantyRepositoryProvider = Provider<WarrantyRepository>((ref) {
+  return WarrantyRepository();
+});
+
+final warrantyItemsStreamProvider = StreamProvider<List<WarrantyItem>>((ref) {
+  final repository = ref.watch(warrantyRepositoryProvider);
+  return repository.watchWarrantyItems();
+});
+
 /// Screen displaying all warranty items with return/warranty tracking
-class WarrantyListScreen extends StatelessWidget {
+class WarrantyListScreen extends ConsumerWidget {
   const WarrantyListScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // Mock data for UI development
-    final mockItems = [
-      WarrantyItem(
-        id: '1',
-        receiptId: 'r1',
-        userId: 'u1',
-        itemDescription: 'Samsung Galaxy Buds Pro',
-        category: 'Electronics',
-        price: 149.99,
-        purchaseDate: DateTime.now().subtract(const Duration(days: 10)),
-        returnDeadline: DateTime.now().add(const Duration(days: 4)),
-        warrantyExpiry: DateTime.now().add(const Duration(days: 720)),
-        merchantName: 'MediaMarkt',
-      ),
-      WarrantyItem(
-        id: '2',
-        receiptId: 'r2',
-        userId: 'u1',
-        itemDescription: 'Nike Air Max 90',
-        category: 'Fashion',
-        price: 149.00,
-        purchaseDate: DateTime.now().subtract(const Duration(days: 12)),
-        returnDeadline: DateTime.now().add(const Duration(days: 2)),
-        warrantyExpiry: DateTime.now().add(const Duration(days: 170)),
-        merchantName: 'Foot Locker',
-      ),
-      WarrantyItem(
-        id: '3',
-        receiptId: 'r3',
-        userId: 'u1',
-        itemDescription: 'Logitech MX Master 3',
-        category: 'Electronics',
-        price: 99.99,
-        purchaseDate: DateTime.now().subtract(const Duration(days: 5)),
-        returnDeadline: DateTime.now().add(const Duration(days: 9)),
-        warrantyExpiry: DateTime.now().add(const Duration(days: 725)),
-        merchantName: 'Saturn',
-      ),
-    ];
+  Widget build(BuildContext context, WidgetRef ref) {
+    final itemsAsync = ref.watch(warrantyItemsStreamProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -61,17 +34,22 @@ class WarrantyListScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: mockItems.isEmpty
-          ? _buildEmptyState(context)
-          : ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: mockItems.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (context, index) => _WarrantyItemTile(
-                item: mockItems[index],
-                onMarkReturned: () => _markAsReturned(context, mockItems[index]),
+      body: itemsAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, stack) => Center(child: Text('Fehler: $err')),
+        data: (items) => items.isEmpty
+            ? _buildEmptyState(context)
+            : ListView.separated(
+                padding: const EdgeInsets.all(16),
+                itemCount: items.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (context, index) => _WarrantyItemTile(
+                  item: items[index],
+                  onMarkReturned: () => _markAsReturned(context, ref, items[index]),
+                  onDelete: () => _deleteItem(context, ref, items[index]),
+                ),
               ),
-            ),
+      ),
     );
   }
 
@@ -103,18 +81,24 @@ class WarrantyListScreen extends StatelessWidget {
     );
   }
 
-  void _markAsReturned(BuildContext context, WarrantyItem item) {
+  void _markAsReturned(BuildContext context, WidgetRef ref, WarrantyItem item) {
+    ref.read(warrantyRepositoryProvider).markAsReturned(item.warrantyId);
+    
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('${item.itemDescription} als zurückgegeben markiert'),
         action: SnackBarAction(
           label: 'Rückgängig',
           onPressed: () {
-            // TODO: Undo
+            // TODO: Implement undo logic if needed
           },
         ),
       ),
     );
+  }
+
+  void _deleteItem(BuildContext context, WidgetRef ref, WarrantyItem item) {
+     ref.read(warrantyRepositoryProvider).deleteWarrantyItem(item.warrantyId);
   }
 }
 
@@ -122,19 +106,20 @@ class WarrantyListScreen extends StatelessWidget {
 class _WarrantyItemTile extends StatelessWidget {
   final WarrantyItem item;
   final VoidCallback onMarkReturned;
+  final VoidCallback onDelete;
 
   const _WarrantyItemTile({
     required this.item,
     required this.onMarkReturned,
+    required this.onDelete,
   });
 
   @override
   Widget build(BuildContext context) {
-    final currencyFormat = NumberFormat.currency(locale: 'de_DE', symbol: '€');
     final dateFormat = DateFormat('dd.MM.yyyy', 'de_DE');
 
     return Dismissible(
-      key: Key(item.id),
+      key: Key(item.warrantyId),
       direction: DismissDirection.endToStart,
       background: Container(
         alignment: Alignment.centerRight,
@@ -159,8 +144,22 @@ class _WarrantyItemTile extends StatelessWidget {
         ),
       ),
       confirmDismiss: (_) async {
-        onMarkReturned();
-        return false; // Don't actually dismiss
+        final confirm = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Artikel zurückgegeben?'),
+            content: Text('Möchten Sie "${item.itemDescription}" als zurückgegeben markieren?'),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Abbrechen')),
+              TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Ja, markieren')),
+            ],
+          ),
+        );
+        
+        if (confirm == true) {
+          onMarkReturned();
+        }
+        return false; 
       },
       child: Card(
         elevation: 2,
@@ -188,8 +187,9 @@ class _WarrantyItemTile extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
+                        // Note: Merchant name isn't stored in WarrantyItem currently, fetching via receiptId would be needed for full detail
                         Text(
-                          '${item.merchantName} • ${currencyFormat.format(item.price)}',
+                          item.category,
                           style:
                               Theme.of(context).textTheme.bodySmall?.copyWith(
                                     color: Colors.grey.shade600,

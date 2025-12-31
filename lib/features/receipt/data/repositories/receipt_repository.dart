@@ -1,209 +1,169 @@
-import 'dart:io';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+
 import 'package:sparfuchs_ai/core/models/receipt.dart';
 
-/// Repository for managing receipt data and images
+/// Repository for Receipt CRUD operations with Firestore
 class ReceiptRepository {
-  final FirebaseStorage _storage;
   final FirebaseFirestore _firestore;
+  final FirebaseAuth _auth;
 
   ReceiptRepository({
-    FirebaseStorage? storage,
     FirebaseFirestore? firestore,
-  })  : _storage = storage ?? FirebaseStorage.instance,
-        _firestore = firestore ?? FirebaseFirestore.instance;
+    FirebaseAuth? auth,
+  })  : _firestore = firestore ?? FirebaseFirestore.instance,
+        _auth = auth ?? FirebaseAuth.instance;
 
-  /// Collection reference for receipts
+  /// Get current user ID
+  String? get _userId => _auth.currentUser?.uid;
+
+  /// Collection reference
   CollectionReference<Map<String, dynamic>> get _receiptsCollection =>
       _firestore.collection('receipts');
 
-  /// Uploads an image to Firebase Storage
-  /// Returns the download URL of the uploaded image
-  ///
-  /// Path format: receipts/{userId}/{timestamp}.jpg
-  Future<String> uploadImage({
-    required File imageFile,
-    required String userId,
-    void Function(double progress)? onProgress,
-  }) async {
-    try {
-      // Generate unique filename with timestamp
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final fileName = '$timestamp.jpg';
-      final storagePath = 'receipts/$userId/$fileName';
-
-      // Create storage reference
-      final storageRef = _storage.ref().child(storagePath);
-
-      // Set metadata
-      final metadata = SettableMetadata(
-        contentType: 'image/jpeg',
-        customMetadata: {
-          'userId': userId,
-          'uploadedAt': DateTime.now().toIso8601String(),
-        },
-      );
-
-      // Upload file with progress tracking
-      final uploadTask = storageRef.putFile(imageFile, metadata);
-
-      // Listen to progress
-      if (onProgress != null) {
-        uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
-          final progress = snapshot.bytesTransferred / snapshot.totalBytes;
-          onProgress(progress);
-        });
-      }
-
-      // Wait for upload to complete
-      await uploadTask;
-
-      // Get download URL
-      final downloadUrl = await storageRef.getDownloadURL();
-
-      debugPrint('ReceiptRepository.uploadImage: Uploaded to $storagePath');
-      return downloadUrl;
-    } on FirebaseException catch (e) {
-      debugPrint('ReceiptRepository.uploadImage error: ${e.code} - ${e.message}');
-      throw ReceiptRepositoryException(
-        'Bild konnte nicht hochgeladen werden: ${e.message}',
-        code: e.code,
-      );
-    } catch (e) {
-      debugPrint('ReceiptRepository.uploadImage error: $e');
-      throw ReceiptRepositoryException('Unbekannter Fehler beim Hochladen: $e');
+  /// Stream of user's receipts (sorted by date descending)
+  Stream<List<Receipt>> watchReceipts({String? householdId}) {
+    final userId = _userId;
+    if (userId == null) {
+      return Stream.value([]);
     }
+
+    Query<Map<String, dynamic>> query;
+
+    if (householdId != null) {
+      // Get household receipts
+      query = _receiptsCollection
+          .where('householdId', isEqualTo: householdId)
+          .orderBy('createdAt', descending: true);
+    } else {
+      // Get user's personal receipts
+      query = _receiptsCollection
+          .where('userId', isEqualTo: userId)
+          .orderBy('createdAt', descending: true);
+    }
+
+    return query.snapshots().map((snapshot) {
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        data['receiptId'] = doc.id;
+        return Receipt.fromJson(_convertTimestamps(data));
+      }).toList();
+    });
   }
 
-  /// Saves a receipt to Firestore
-  Future<void> saveReceipt(Receipt receipt) async {
-    try {
-      await _receiptsCollection.doc(receipt.receiptId).set(receipt.toJson());
-      debugPrint('ReceiptRepository.saveReceipt: Saved ${receipt.receiptId}');
-    } on FirebaseException catch (e) {
-      debugPrint('ReceiptRepository.saveReceipt error: ${e.code} - ${e.message}');
-      throw ReceiptRepositoryException(
-        'Beleg konnte nicht gespeichert werden: ${e.message}',
-        code: e.code,
-      );
-    }
-  }
-
-  /// Gets a single receipt by ID
+  /// Get a single receipt by ID
   Future<Receipt?> getReceipt(String receiptId) async {
     try {
       final doc = await _receiptsCollection.doc(receiptId).get();
-      if (!doc.exists || doc.data() == null) {
-        return null;
-      }
-      return Receipt.fromJson(doc.data()!);
-    } on FirebaseException catch (e) {
-      debugPrint('ReceiptRepository.getReceipt error: ${e.code} - ${e.message}');
-      throw ReceiptRepositoryException(
-        'Beleg konnte nicht geladen werden: ${e.message}',
-        code: e.code,
-      );
+      if (!doc.exists) return null;
+
+      final data = doc.data()!;
+      data['receiptId'] = doc.id;
+      return Receipt.fromJson(_convertTimestamps(data));
+    } catch (e) {
+      debugPrint('ReceiptRepository.getReceipt error: $e');
+      return null;
     }
   }
 
-  /// Gets all receipts for a user
-  Future<List<Receipt>> getReceiptsForUser(String userId) async {
-    try {
-      final snapshot = await _receiptsCollection
-          .where('userId', isEqualTo: userId)
-          .orderBy('createdAt', descending: true)
-          .get();
-
-      return snapshot.docs
-          .map((doc) => Receipt.fromJson(doc.data()))
-          .toList();
-    } on FirebaseException catch (e) {
-      debugPrint('ReceiptRepository.getReceiptsForUser error: ${e.code}');
-      throw ReceiptRepositoryException(
-        'Belege konnten nicht geladen werden: ${e.message}',
-        code: e.code,
-      );
+  /// Save a new receipt
+  Future<String> saveReceipt({
+    required ReceiptData receiptData,
+    required String imageUrl,
+    String? householdId,
+  }) async {
+    final userId = _userId;
+    if (userId == null) {
+      throw Exception('User not authenticated');
     }
+
+    final now = DateTime.now();
+    final docRef = await _receiptsCollection.add({
+      'userId': userId,
+      'householdId': householdId,
+      'imageUrl': imageUrl,
+      'isBookmarked': false,
+      'receiptData': receiptData.toJson(),
+      'createdAt': Timestamp.fromDate(now),
+      'updatedAt': Timestamp.fromDate(now),
+    });
+
+    debugPrint('ReceiptRepository: Saved receipt ${docRef.id}');
+    return docRef.id;
   }
 
-  /// Updates an existing receipt
-  Future<void> updateReceipt(Receipt receipt) async {
-    try {
-      await _receiptsCollection.doc(receipt.receiptId).update(receipt.toJson());
-      debugPrint('ReceiptRepository.updateReceipt: Updated ${receipt.receiptId}');
-    } on FirebaseException catch (e) {
-      debugPrint('ReceiptRepository.updateReceipt error: ${e.code}');
-      throw ReceiptRepositoryException(
-        'Beleg konnte nicht aktualisiert werden: ${e.message}',
-        code: e.code,
-      );
-    }
+  /// Update receipt data
+  Future<void> updateReceipt(String receiptId, ReceiptData receiptData) async {
+    await _receiptsCollection.doc(receiptId).update({
+      'receiptData': receiptData.toJson(),
+      'updatedAt': Timestamp.now(),
+    });
   }
 
-  /// Deletes a receipt and its image
-  Future<void> deleteReceipt(String receiptId) async {
-    try {
-      // Get receipt to find image URL
-      final receipt = await getReceipt(receiptId);
-      if (receipt != null && receipt.imageUrl.isNotEmpty) {
-        // Delete image from storage
-        try {
-          await _storage.refFromURL(receipt.imageUrl).delete();
-        } catch (e) {
-          debugPrint('ReceiptRepository.deleteReceipt: Could not delete image: $e');
-          // Continue with document deletion even if image deletion fails
-        }
-      }
-
-      // Delete document from Firestore
-      await _receiptsCollection.doc(receiptId).delete();
-      debugPrint('ReceiptRepository.deleteReceipt: Deleted $receiptId');
-    } on FirebaseException catch (e) {
-      debugPrint('ReceiptRepository.deleteReceipt error: ${e.code}');
-      throw ReceiptRepositoryException(
-        'Beleg konnte nicht gelöscht werden: ${e.message}',
-        code: e.code,
-      );
-    }
-  }
-
-  /// Toggles the bookmark status of a receipt
+  /// Toggle bookmark status
   Future<void> toggleBookmark(String receiptId, bool isBookmarked) async {
-    try {
-      await _receiptsCollection.doc(receiptId).update({
-        'isBookmarked': isBookmarked,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-    } on FirebaseException catch (e) {
-      debugPrint('ReceiptRepository.toggleBookmark error: ${e.code}');
-      throw ReceiptRepositoryException(
-        'Lesezeichen konnte nicht aktualisiert werden: ${e.message}',
-        code: e.code,
-      );
-    }
+    await _receiptsCollection.doc(receiptId).update({
+      'isBookmarked': isBookmarked,
+      'updatedAt': Timestamp.now(),
+    });
   }
 
-  /// Stream of receipts for real-time updates
-  Stream<List<Receipt>> watchReceiptsForUser(String userId) {
-    return _receiptsCollection
+  /// Delete a receipt
+  Future<void> deleteReceipt(String receiptId) async {
+    await _receiptsCollection.doc(receiptId).delete();
+  }
+
+  /// Search receipts by merchant or item description
+  Future<List<Receipt>> searchReceipts(String query) async {
+    final userId = _userId;
+    if (userId == null) return [];
+
+    // Get all user receipts and filter client-side
+    // (Firestore doesn't support full-text search)
+    final snapshot = await _receiptsCollection
         .where('userId', isEqualTo: userId)
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((snapshot) =>
-            snapshot.docs.map((doc) => Receipt.fromJson(doc.data())).toList());
+        .get();
+
+    final lowerQuery = query.toLowerCase();
+    return snapshot.docs
+        .map((doc) {
+          final data = doc.data();
+          data['receiptId'] = doc.id;
+          return Receipt.fromJson(_convertTimestamps(data));
+        })
+        .where((receipt) {
+          final merchantMatch = receipt.receiptData.merchant.name
+              .toLowerCase()
+              .contains(lowerQuery);
+          final itemMatch = receipt.receiptData.items.any(
+              (item) => item.description.toLowerCase().contains(lowerQuery));
+          return merchantMatch || itemMatch;
+        })
+        .toList();
   }
-}
 
-/// Exception class for repository errors
-class ReceiptRepositoryException implements Exception {
-  final String message;
-  final String? code;
-
-  ReceiptRepositoryException(this.message, {this.code});
-
-  @override
-  String toString() => 'ReceiptRepositoryException: $message (code: $code)';
+  /// Convert Firestore Timestamps to ISO strings
+  Map<String, dynamic> _convertTimestamps(Map<String, dynamic> data) {
+    return data.map((key, value) {
+      if (value is Timestamp) {
+        return MapEntry(key, value.toDate().toIso8601String());
+      } else if (value is Map<String, dynamic>) {
+        return MapEntry(key, _convertTimestamps(value));
+      } else if (value is List) {
+        return MapEntry(
+          key,
+          value.map((item) {
+            if (item is Map<String, dynamic>) {
+              return _convertTimestamps(item);
+            } else if (item is Timestamp) {
+              return item.toDate().toIso8601String();
+            }
+            return item;
+          }).toList(),
+        );
+      }
+      return MapEntry(key, value);
+    });
+  }
 }
