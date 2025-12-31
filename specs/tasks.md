@@ -427,7 +427,7 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
     - **Copilot Prompt:** `Create Flutter WarrantyNotificationService using flutter_local_notifications to schedule notification 3 days before return_deadline and warranty_expiry dates`
     - _Requirements: 8.4_
 
-  - [ ] 17.4 Write property test for warranty detection and reminders
+  - [x] 17.4 Write property test for warranty detection and reminders
 
     - **Property 21: Warranty Item Detection and Reminder Setup**
     - **Validates: Requirements 8.1, 8.2, 8.3**
