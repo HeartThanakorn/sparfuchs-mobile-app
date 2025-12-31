@@ -450,9 +450,9 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
     - **Copilot Prompt:** `Create Flutter l10n configuration with app_en.arb and app_de.arb, DateFormat('dd.MM.yyyy') for German dates, NumberFormat.currency(locale: 'de_DE', symbol: '€') for prices`
     - _Requirements: 10.1, 10.2, 10.3_
 
-- [ ] 19. Implement GDPR compliance features
+- [x] 19. Implement GDPR compliance features
 
-  - [ ] 19.1 Create data export functionality
+  - [x] 19.1 Create data export functionality
 
     - Export all user data as JSON
     - **Copilot Prompt:** `Create Flutter DataExportService that queries all user's receipts, households, warranty_items from Firestore and exports as downloadable JSON file`
