@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -7,20 +8,33 @@ import 'package:http/http.dart' as http;
 import 'package:sparfuchs_ai/core/models/receipt.dart';
 
 /// Service for scanning receipts using Gemini 2.5 Flash API
+/// with retry logic and error handling
 class GeminiScanService {
   static const String _apiEndpoint =
       'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent';
 
+  /// Default timeout for API calls
+  static const Duration _defaultTimeout = Duration(seconds: 30);
+
+  /// Maximum retry attempts
+  static const int _maxRetries = 3;
+
+  /// Base delay for exponential backoff (doubles each retry)
+  static const Duration _baseRetryDelay = Duration(seconds: 1);
+
   final String _apiKey;
   final http.Client _httpClient;
+  final Duration timeout;
 
   GeminiScanService({
     required String apiKey,
     http.Client? httpClient,
+    this.timeout = _defaultTimeout,
   })  : _apiKey = apiKey,
         _httpClient = httpClient ?? http.Client();
 
   /// Scans a receipt image and returns parsed ReceiptData
+  /// with automatic retry on transient failures
   Future<ReceiptData> scanReceipt(File imageFile) async {
     final stopwatch = Stopwatch()..start();
 
@@ -34,20 +48,56 @@ class GeminiScanService {
       // 2. Determine MIME type
       final mimeType = _getMimeType(imageFile.path);
 
-      // 3. Call Gemini API
-      final response = await _callGeminiApi(base64Image, mimeType);
+      // 3. Call Gemini API with retry
+      final response = await _callGeminiApiWithRetry(base64Image, mimeType);
 
       // 4. Parse response
       final receiptData = _parseResponse(response, stopwatch.elapsedMilliseconds);
 
       debugPrint('GeminiScanService: Scan completed in ${stopwatch.elapsedMilliseconds}ms');
       return receiptData;
+    } on GeminiApiException {
+      rethrow;
+    } on GeminiParseException {
+      rethrow;
     } catch (e) {
       debugPrint('GeminiScanService.scanReceipt error: $e');
-      rethrow;
+      throw GeminiApiException.fromError(e);
     } finally {
       stopwatch.stop();
     }
+  }
+
+  /// Calls Gemini API with exponential backoff retry
+  Future<Map<String, dynamic>> _callGeminiApiWithRetry(
+    String base64Image,
+    String mimeType,
+  ) async {
+    int attempt = 0;
+    GeminiApiException? lastException;
+
+    while (attempt < _maxRetries) {
+      try {
+        return await _callGeminiApi(base64Image, mimeType);
+      } on GeminiApiException catch (e) {
+        lastException = e;
+        attempt++;
+
+        // Don't retry on non-transient errors
+        if (!e.isRetryable) {
+          debugPrint('GeminiScanService: Non-retryable error: ${e.message}');
+          rethrow;
+        }
+
+        if (attempt < _maxRetries) {
+          final delay = _baseRetryDelay * (1 << (attempt - 1)); // Exponential backoff
+          debugPrint('GeminiScanService: Retry $attempt/$_maxRetries after ${delay.inSeconds}s');
+          await Future.delayed(delay);
+        }
+      }
+    }
+
+    throw lastException ?? GeminiApiException.unknown();
   }
 
   /// Calls the Gemini API with the image
@@ -80,22 +130,26 @@ class GeminiScanService {
       }
     };
 
-    final response = await _httpClient.post(
-      uri,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(requestBody),
-    );
+    try {
+      final response = await _httpClient
+          .post(
+            uri,
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode(requestBody),
+          )
+          .timeout(timeout);
 
-    if (response.statusCode != 200) {
-      throw GeminiApiException(
-        'API call failed: ${response.statusCode}',
-        statusCode: response.statusCode,
-        body: response.body,
-      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+
+      // Handle specific HTTP errors
+      throw GeminiApiException.fromStatusCode(response.statusCode, response.body);
+    } on TimeoutException {
+      throw GeminiApiException.timeout();
+    } on SocketException {
+      throw GeminiApiException.networkError();
     }
-
-    final jsonResponse = jsonDecode(response.body) as Map<String, dynamic>;
-    return jsonResponse;
   }
 
   /// Parses the Gemini API response into ReceiptData
@@ -104,18 +158,18 @@ class GeminiScanService {
       // Extract text content from Gemini response structure
       final candidates = response['candidates'] as List?;
       if (candidates == null || candidates.isEmpty) {
-        throw GeminiParseException('No candidates in response');
+        throw GeminiParseException.noContent();
       }
 
       final content = candidates[0]['content'] as Map<String, dynamic>?;
       final parts = content?['parts'] as List?;
       if (parts == null || parts.isEmpty) {
-        throw GeminiParseException('No parts in response');
+        throw GeminiParseException.noContent();
       }
 
       final textPart = parts[0]['text'] as String?;
       if (textPart == null) {
-        throw GeminiParseException('No text in response');
+        throw GeminiParseException.noContent();
       }
 
       // Parse the JSON from the text
@@ -123,7 +177,7 @@ class GeminiScanService {
       final receiptDataJson = receiptJson['receipt_data'] as Map<String, dynamic>?;
 
       if (receiptDataJson == null) {
-        throw GeminiParseException('No receipt_data in response');
+        throw GeminiParseException.invalidFormat();
       }
 
       // Add processing time to ai_metadata
@@ -135,10 +189,12 @@ class GeminiScanService {
       }
 
       return ReceiptData.fromJson(receiptDataJson);
+    } on FormatException {
+      throw GeminiParseException.invalidJson();
     } catch (e) {
       debugPrint('GeminiScanService._parseResponse error: $e');
       if (e is GeminiParseException) rethrow;
-      throw GeminiParseException('Failed to parse receipt: $e');
+      throw GeminiParseException.fromError(e);
     }
   }
 
@@ -262,23 +318,159 @@ Fix common German receipt OCR errors:
 ''';
 }
 
-/// Exception for Gemini API errors
+/// Exception for Gemini API errors with German user-friendly messages
 class GeminiApiException implements Exception {
   final String message;
+  final String userMessage; // German user-friendly message
   final int? statusCode;
   final String? body;
+  final bool isRetryable;
 
-  GeminiApiException(this.message, {this.statusCode, this.body});
+  const GeminiApiException({
+    required this.message,
+    required this.userMessage,
+    this.statusCode,
+    this.body,
+    this.isRetryable = false,
+  });
+
+  /// Creates exception from HTTP status code
+  factory GeminiApiException.fromStatusCode(int statusCode, String? body) {
+    switch (statusCode) {
+      case 400:
+        return GeminiApiException(
+          message: 'Bad request: $body',
+          userMessage: 'Ungültige Anfrage. Bitte versuchen Sie es erneut.',
+          statusCode: statusCode,
+          body: body,
+          isRetryable: false,
+        );
+      case 401:
+      case 403:
+        return GeminiApiException(
+          message: 'Authentication failed',
+          userMessage: 'API-Schlüssel ungültig. Bitte Einstellungen prüfen.',
+          statusCode: statusCode,
+          body: body,
+          isRetryable: false,
+        );
+      case 429:
+        return GeminiApiException(
+          message: 'Rate limit exceeded',
+          userMessage: 'Zu viele Anfragen. Bitte warten Sie einen Moment.',
+          statusCode: statusCode,
+          body: body,
+          isRetryable: true,
+        );
+      case 500:
+      case 502:
+      case 503:
+      case 504:
+        return GeminiApiException(
+          message: 'Server error: $statusCode',
+          userMessage: 'Server vorübergehend nicht erreichbar. Bitte später erneut versuchen.',
+          statusCode: statusCode,
+          body: body,
+          isRetryable: true,
+        );
+      default:
+        return GeminiApiException(
+          message: 'HTTP error: $statusCode',
+          userMessage: 'Unbekannter Fehler aufgetreten. Bitte erneut versuchen.',
+          statusCode: statusCode,
+          body: body,
+          isRetryable: statusCode >= 500,
+        );
+    }
+  }
+
+  /// Creates timeout exception
+  factory GeminiApiException.timeout() {
+    return const GeminiApiException(
+      message: 'Request timed out',
+      userMessage: 'Zeitüberschreitung. Bitte prüfen Sie Ihre Internetverbindung.',
+      isRetryable: true,
+    );
+  }
+
+  /// Creates network error exception
+  factory GeminiApiException.networkError() {
+    return const GeminiApiException(
+      message: 'Network error',
+      userMessage: 'Keine Internetverbindung. Bitte Verbindung prüfen.',
+      isRetryable: true,
+    );
+  }
+
+  /// Creates unknown exception
+  factory GeminiApiException.unknown() {
+    return const GeminiApiException(
+      message: 'Unknown error',
+      userMessage: 'Unbekannter Fehler. Bitte erneut versuchen.',
+      isRetryable: false,
+    );
+  }
+
+  /// Creates exception from any error
+  factory GeminiApiException.fromError(Object error) {
+    if (error is TimeoutException) {
+      return GeminiApiException.timeout();
+    }
+    if (error is SocketException) {
+      return GeminiApiException.networkError();
+    }
+    return GeminiApiException(
+      message: error.toString(),
+      userMessage: 'Fehler beim Scannen. Bitte erneut versuchen.',
+      isRetryable: false,
+    );
+  }
 
   @override
   String toString() => 'GeminiApiException: $message (status: $statusCode)';
 }
 
-/// Exception for parsing errors
+/// Exception for parsing errors with German user-friendly messages
 class GeminiParseException implements Exception {
   final String message;
+  final String userMessage; // German user-friendly message
 
-  GeminiParseException(this.message);
+  const GeminiParseException({
+    required this.message,
+    required this.userMessage,
+  });
+
+  /// No content in response
+  factory GeminiParseException.noContent() {
+    return const GeminiParseException(
+      message: 'No content in AI response',
+      userMessage: 'Keine Daten vom Kassenbon erkannt. Bitte Foto erneut aufnehmen.',
+    );
+  }
+
+  /// Invalid JSON format
+  factory GeminiParseException.invalidJson() {
+    return const GeminiParseException(
+      message: 'Invalid JSON in response',
+      userMessage: 'Fehler beim Verarbeiten. Bitte erneut scannen.',
+    );
+  }
+
+  /// Invalid receipt format
+  factory GeminiParseException.invalidFormat() {
+    return const GeminiParseException(
+      message: 'Invalid receipt format in response',
+      userMessage: 'Kassenbon konnte nicht erkannt werden. Bitte deutlicheres Foto aufnehmen.',
+    );
+  }
+
+  /// Creates exception from any error
+  factory GeminiParseException.fromError(Object error) {
+    return GeminiParseException(
+      message: error.toString(),
+      userMessage: 'Fehler beim Auslesen des Kassenbons. Bitte erneut versuchen.',
+    );
+  }
 
   @override
   String toString() => 'GeminiParseException: $message';
