@@ -401,7 +401,7 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
     - **Copilot Prompt:** `Create Flutter RecipeSuggestionsBottomSheet showing 3 RecipeCards with thumbnail image, recipe name, 'Uses: ingredient1, ingredient2' text, cooking time and servings badges`
     - _Requirements: 7.3, 7.4_
 
-  - [ ] 16.3 Write property test for recipe suggestion count
+  - [x] 16.3 Write property test for recipe suggestion count
     - **Property 20: Recipe Suggestion Count and Relevance**
     - **Validates: Requirements 7.1, 7.2**
 
