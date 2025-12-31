@@ -414,7 +414,7 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
     - **Copilot Prompt:** `Create Flutter WarrantyService with trackWarrantyItems(Receipt) that filters items where category is 'Electronics' or 'Fashion', creates warranty_item document with return_deadline = purchaseDate + 14 days, warranty_expiry = purchaseDate + 2 years for Electronics`
     - _Requirements: 8.1, 8.2, 8.3_
 
-  - [ ] 17.2 Build WarrantyListScreen
+  - [x] 17.2 Build WarrantyListScreen
 
     - List tracked items with days remaining
     - Mark as returned functionality
