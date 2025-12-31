@@ -437,7 +437,7 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
     - **Property 22: Days Remaining Calculation**
     - **Validates: Requirements 8.5**
 
-  - [ ] 17.6 Write property test for reminder cancellation
+  - [x] 17.6 Write property test for reminder cancellation
     - **Property 23: Reminder Cancellation on Return**
     - **Validates: Requirements 8.6**
 
