@@ -103,12 +103,12 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
 
 - [ ] 7. Implement Receipt Repository
 
-  - [x] 7.1 Create ReceiptRepository with image upload
-
-    - Upload image to Firebase Storage
-    - Return download URL
-    - **Copilot Prompt:** `Create Flutter ReceiptRepository with uploadImage(File) method that uploads to Firebase Storage path 'receipts/{userId}/{timestamp}.jpg' and returns download URL`
-    - _Requirements: 2.7_
+  - [x] 7.1 Create ReceiptRepository with image upload and local fallback
+    - Upload image to Firebase Storage (Primary)
+    - Fallback to Local Device Storage (ApplicationDocumentsDirectory) if upload fails
+    - Return download URL or local file path
+    - **Copilot Prompt:** `Create Flutter ReceiptRepository with saveImage(File) method that attempts Firebase Storage upload, catches errors, and falls back to saving file locally, returning the resulting URL or path`
+    - _Requirements: 2.7, 9.3_
 
   - [x] 7.2 Implement scanReceipt API call to n8n
 

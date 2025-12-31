@@ -21,9 +21,9 @@ SparFuchs AI takes a photo of your receipt and automatically extracts all the pu
 | Component | Technology |
 |-----------|------------|
 | Frontend | Flutter (Dart) with Riverpod |
-| AI | Gemini 2.5 Flash (direct API call) |
-| Database | Firestore |
-| Storage | Firebase Cloud Storage |
+| AI | Gemini 2.5 Flash (Direct REST API) |
+| Database | Firestore (Production Mode) |
+| Storage | Firebase Cloud Storage (Primary) / Local Device Storage (Fallback) |
 | Auth | Firebase Authentication |
 
 ## Architecture

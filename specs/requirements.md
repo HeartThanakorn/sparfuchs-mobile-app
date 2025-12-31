@@ -124,19 +124,19 @@ SparFuchs AI is a German receipt scanning and expense tracking mobile applicatio
 5. WHEN a user views tracked items, THE Warranty_Monitor SHALL display days remaining for return/warranty
 6. WHEN a user marks an item as returned, THE Warranty_Monitor SHALL cancel associated reminders
 
-### Requirement 9: Data Privacy & GDPR Compliance (Self-Hosted Hybrid)
+### Requirement 9: Data Privacy & GDPR Compliance (Serverless Architecture)
 
-**User Story:** As a German user, I want my data handled according to GDPR regulations with full control over processing, so that my privacy is protected.
+**User Story:** As a German user, I want my data handled securely with minimal third-party exposure, so that my privacy is protected.
 
 #### Acceptance Criteria
 
-1. THE SparFuchs_App SHALL use a self-hosted hybrid architecture: n8n workflows on Hostinger VPS (Dockerized) for AI processing, Firestore for mobile sync
-2. WHEN processing receipt images, THE n8n_Workflow SHALL handle AI API calls on the self-hosted VPS to maintain data control
-3. THE SparFuchs_App SHALL store user sync data in Firestore while keeping AI processing logs on the VPS
+1. THE SparFuchs_App SHALL use a serverless architecture: Direct calls from Flutter to Gemini API (Google AI) and Firestore (Google Cloud)
+2. WHEN processing receipt images, THE SparFuchs_App SHALL send data directly to Gemini API without intermediate servers
+3. THE SparFuchs_App SHALL store user data in Firestore (Europe region) and receipt images in Firebase Storage or Local Device Storage
 4. WHEN a user requests data export, THE SparFuchs_App SHALL provide all personal data in machine-readable format within 30 days
-5. WHEN a user requests account deletion, THE SparFuchs_App SHALL permanently delete all user data from both Firestore and VPS within 30 days
+5. WHEN a user requests account deletion, THE SparFuchs_App SHALL permanently delete all user data from Firestore and Storage within 30 days
 6. THE SparFuchs_App SHALL display clear privacy policy and obtain explicit consent before data collection
-7. WHEN processing receipt images, THE AI_Scanner SHALL not retain images on external AI provider servers after processing
+7. THE SparFuchs_App SHALL NOT store receipt images on Gemini servers after processing (stateless processing)
 
 ### Requirement 10: Localization
 

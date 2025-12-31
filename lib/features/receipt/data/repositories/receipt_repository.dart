@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
 
 import 'package:sparfuchs_ai/core/models/receipt.dart';
 
@@ -82,6 +84,14 @@ class ReceiptRepository {
 
     final uploadTask = await ref.putFile(imageFile);
     return await uploadTask.ref.getDownloadURL();
+  }
+
+  /// Save receipt image locally on device (Fallback)
+  Future<String> saveImageLocally(File imageFile) async {
+    final appDir = await getApplicationDocumentsDirectory();
+    final fileName = '${DateTime.now().millisecondsSinceEpoch}_${path.basename(imageFile.path)}';
+    final savedImage = await imageFile.copy('${appDir.path}/$fileName');
+    return savedImage.path;
   }
 
   /// Save a new receipt

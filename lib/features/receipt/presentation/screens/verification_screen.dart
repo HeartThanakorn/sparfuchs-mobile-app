@@ -81,14 +81,42 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
       final repository = ref.read(receiptRepositoryProvider);
       final updatedReceipt = _buildUpdatedReceipt();
 
-      if (_isNewReceipt && widget.localImage != null) {
         // 1. Upload Image
-        final imageUrl = await repository.uploadReceiptImage(widget.localImage!);
+        String imageUrl = '';
+        try {
+          // Try Firebase Storage first
+          imageUrl = await repository.uploadReceiptImage(widget.localImage!);
+        } catch (e) {
+          debugPrint('Image upload failed: $e');
+          
+          // Fallback: Save locally
+          try {
+            imageUrl = await repository.saveImageLocally(widget.localImage!);
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Upload fehlgeschlagen. Bild wurde lokal gespeichert.'),
+                  backgroundColor: Color(AppColors.warningOrange),
+                ),
+              );
+            }
+          } catch (localError) {
+            debugPrint('Local save failed: $localError');
+             if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Bild konnte nicht gespeichert werden.'),
+                  backgroundColor: Color(AppColors.errorRed),
+                ),
+              );
+            }
+          }
+        }
 
         // 2. Save Receipt
         await repository.saveReceipt(
           receiptData: updatedReceipt.receiptData,
-          imageUrl: imageUrl,
+          imageUrl: imageUrl, 
           householdId: updatedReceipt.householdId,
         );
       } else {
@@ -322,7 +350,9 @@ class _PurchaseInfoCard extends StatelessWidget {
                       )
                     : (receipt.imageUrl.isNotEmpty
                         ? DecorationImage(
-                            image: NetworkImage(receipt.imageUrl),
+                            image: receipt.imageUrl.startsWith('http')
+                                ? NetworkImage(receipt.imageUrl)
+                                : FileImage(File(receipt.imageUrl)) as ImageProvider,
                             fit: BoxFit.cover,
                           )
                         : null),

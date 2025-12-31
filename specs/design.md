@@ -15,11 +15,11 @@ sequenceDiagram
     participant User
     participant Flutter as Flutter App
     participant AI as Gemini 2.5 Flash API
-    participant Storage as Cloud Storage<br/>(Image)
+    participant Storage as Storage (Cloud/Local)
     participant DB as Firestore
 
     User->>Flutter: 1. Capture Receipt Photo
-    Flutter->>Storage: 2. Upload Image (optional backup)
+    Flutter->>Storage: 2. Save Image (Cloud or Local)
     
     Note over Flutter,AI: Direct API Call from Flutter
     Flutter->>AI: 3. Send Base64 Image + Prompt
@@ -66,6 +66,7 @@ graph TB
     SYNC <--> FS
     LOCAL <--> SYNC
     CAM --> STORAGE
+    CAM -.-> LOCAL
 ```
 
 ## Components and Interfaces
@@ -75,7 +76,7 @@ graph TB
 | Component             | Responsibility                             | Key Interfaces                                              |
 | --------------------- | ------------------------------------------ | ----------------------------------------------------------- |
 | `CameraService`       | Capture receipt images, handle permissions | `captureImage()`, `pickFromGallery()`                       |
-| `ReceiptRepository`   | CRUD operations for receipts               | `scanReceipt(imageUrl)`, `getReceipts()`, `updateReceipt()` |
+| `ReceiptRepository`   | CRUD operations for receipts               | `scanReceipt(imageUrl)`, `saveImageLocally(file)`           |
 | `HouseholdRepository` | Manage household sharing                   | `createHousehold()`, `joinHousehold(code)`, `getMembers()`  |
 | `InflationService`    | Track product prices                       | `getPriceHistory(productId)`, `compareAcrossMerchants()`    |
 | `WarrantyService`     | Manage return/warranty reminders           | `trackItem(item)`, `getUpcomingReminders()`                 |
@@ -91,6 +92,8 @@ graph TB
 ### 3. API Contract
 
 #### Gemini API Request (from Flutter)
+
+Direct usage of `google_generative_ai` package (or raw HTTP REST for fine control).
 
 ```dart
 // Direct call to Gemini 2.5 Flash API
@@ -174,7 +177,7 @@ final response = await http.post(
   "receipt_id": "rec_001",
   "user_id": "uid_123",
   "household_id": "hh_456",
-  "image_url": "https://storage.googleapis.com/sparfuchs/receipts/rec_001.jpg",
+  "image_url": "https://storage.googleapis.com/... OR /data/user/0/.../app_flutter/...",
   "is_bookmarked": false,
   "receipt_data": {
     "merchant": {
@@ -560,14 +563,14 @@ class AiMetadata {
 
 ### Design Principles
 
-1. **Clean & Minimal**: White space, clear hierarchy
-2. **Trustworthy**: Consistent patterns, no dark patterns
-3. **Accessible**: WCAG 2.1 AA compliant, min 44px touch targets
-4. **German-Friendly**: Support for long compound words, proper number formatting (1.234,56 €)
+1.  **Clean & Minimal**: White space, clear hierarchy
+2.  **Trustworthy**: Consistent patterns, no dark patterns
+3.  **Accessible**: WCAG 2.1 AA compliant, min 44px touch targets
+4.  **German-Friendly**: Support for long compound words, proper number formatting (1.234,56 €)
 
 ## The "Golden" AI System Prompt
 
-This is the critical system prompt used in the n8n workflow when calling GPT-4o to parse German receipts:
+This is the critical system prompt used in the application to parse German receipts:
 
 ```text
 You are a specialized German receipt parser for the SparFuchs AI expense tracking app. Your task is to extract structured data from receipt images with high accuracy.
@@ -614,7 +617,7 @@ Return ONLY valid JSON matching this exact schema (no markdown, no explanations)
     ],
     "ai_metadata": {
       "confidence_score": <0.0-1.0 based on image quality and parsing certainty>,
-      "model_used": "gpt-4o",
+      "model_used": "gemini-2.5-flash",
       "processing_time_ms": null
     }
   }
@@ -627,45 +630,31 @@ Identify ALL Pfand/deposit items. Common patterns:
 - "Pfand", "PFAND", "Pfd", "Leergut"
 - "Einweg", "Einwegpfand", "EW-Pfand" (€0.25)
 - "Mehrweg", "Mehrwegpfand", "MW-Pfand" (€0.08-€0.15)
-- "Leergut MW", "Leergut EW"
 - Items with exactly €0.25, €0.15, or €0.08 unit price near beverages
 - Set type: "pfand_bottle" and category: "Deposit" for ALL deposit items
 
 ### 2. OCR Error Corrections - MANDATORY
-Fix these common German receipt OCR errors:
+Fix common German receipt OCR errors:
 - "Mwich" → "Milch"
-- "Brot" variations: "8rot", "Br0t" → "Brot"
-- "Käse" variations: "Kase", "K4se" → "Käse"
-- "Müsli" variations: "Musli", "Muesli" → "Müsli"
-- "Gemüse" variations: "Gemuse" → "Gemüse"
-- "Süß" variations: "Suss", "Suess" → "Süß"
-- "Größe" variations: "Grosse", "Gr." → "Größe"
+- "8rot", "Br0t" → "Brot"
+- "Kase", "K4se" → "Käse"
 - Numbers confused with letters: 0↔O, 1↔l, 5↔S, 8↔B
 
 ### 3. German Abbreviations - EXPAND
-- "Stk" / "St." → "Stück" (piece)
-- "Pck" / "Pkg" → "Packung" (package)
-- "Fl." → "Flasche" (bottle)
-- "Mwst" / "MwSt." → "Mehrwertsteuer" (VAT)
-- "inkl." → "inklusive"
-- "zzgl." → "zuzüglich"
-- "ca." → "circa"
-- "Bio" → Keep as "Bio" (organic)
-- "TK" → "Tiefkühl" (frozen)
+- "Stk" / "St." → "Stück"
+- "Pck" / "Pkg" → "Packung"
+- "Fl." → "Flasche"
+- "Bio" → Keep as "Bio"
+- "TK" → "Tiefkühl"
 
 ### 4. Tax Rate Classification
-- 7% (ermäßigt): Food, beverages, books, newspapers
-- 19% (normal): Non-food items, household goods, electronics
-- Look for "A" or "B" markers next to items (A=19%, B=7% typically)
-- "Netto", "Brutto" indicate pre/post-tax amounts
+- 7% (ermäßigt): Food, beverages, books
+- 19% (normal): Non-food items, electronics
 
 ### 5. Discount Detection
 - Look for: "Rabatt", "Aktion", "Angebot", "Reduziert", "-", "Ersparnis"
-- Negative amounts or struck-through prices
-- "Statt" (instead of) indicates original price
 - Set is_discounted: true and capture discount as negative number
 
-### 6. Category Assignment
 - Groceries: Obst, Gemüse, Fleisch, Fisch, Milchprodukte, Brot, Eier
 - Beverages: Wasser, Saft, Bier, Wein, Softdrinks, Kaffee, Tee
 - Snacks: Schokolade, Chips, Süßigkeiten, Kekse
