@@ -430,7 +430,7 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
     - **Copilot Prompt:** `Create Flutter AccountDeletionService that deletes all documents where user_id matches, removes user from household members, deletes Storage files, and finally deletes Firebase Auth account`
     - _Requirements: 9.5_
 
-- [ ] 20. Final checkpoint - Full integration test
+- [x] 20. Final checkpoint - Full integration test
   - End-to-end test: Scan → Verify → Save → Dashboard → Archive
   - Test household sharing flow
   - Test all killer features (Inflation, Recipes, Warranty)
