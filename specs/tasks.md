@@ -432,7 +432,7 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
     - **Property 21: Warranty Item Detection and Reminder Setup**
     - **Validates: Requirements 8.1, 8.2, 8.3**
 
-  - [ ] 17.5 Write property test for days remaining calculation
+  - [x] 17.5 Write property test for days remaining calculation
 
     - **Property 22: Days Remaining Calculation**
     - **Validates: Requirements 8.5**
