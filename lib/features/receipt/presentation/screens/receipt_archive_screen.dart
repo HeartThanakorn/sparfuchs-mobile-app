@@ -28,7 +28,7 @@ class _ReceiptArchiveScreenState extends ConsumerState<ReceiptArchiveScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Belegarchiv'),
+        title: const Text('Receipt Archive'),
         centerTitle: true,
         actions: [
           IconButton(
@@ -65,7 +65,7 @@ class _ReceiptArchiveScreenState extends ConsumerState<ReceiptArchiveScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Fehler beim Laden',
+            'Error loading',
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 8),

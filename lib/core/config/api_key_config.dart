@@ -20,14 +20,12 @@ class ApiKeyConfig {
   static Future<void> initialize() async {
     if (_initialized) return;
 
-    if (kDebugMode) {
-      // In debug mode, load from .env file
-      try {
-        await dotenv.load(fileName: '.env');
-        debugPrint('ApiKeyConfig: Loaded .env file');
-      } catch (e) {
-        debugPrint('ApiKeyConfig: .env file not found, using dart-define');
-      }
+    // Load environment variables (debug & release)
+    try {
+      await dotenv.load(fileName: '.env');
+      debugPrint('ApiKeyConfig: Loaded .env file');
+    } catch (e) {
+      debugPrint('ApiKeyConfig: .env file not found/loaded ($e)');
     }
 
     _initialized = true;
@@ -45,12 +43,10 @@ class ApiKeyConfig {
       return dartDefineKey;
     }
 
-    // In debug mode, try .env file
-    if (kDebugMode) {
-      final envKey = dotenv.env['GEMINI_API_KEY'];
-      if (envKey != null && envKey.isNotEmpty) {
-        return envKey;
-      }
+    // Try .env file (fallback for both debug and release if bundled)
+    final envKey = dotenv.env['GEMINI_API_KEY'];
+    if (envKey != null && envKey.isNotEmpty) {
+      return envKey;
     }
 
     // No key found

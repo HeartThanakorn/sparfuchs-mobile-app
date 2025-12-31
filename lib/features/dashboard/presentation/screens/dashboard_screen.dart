@@ -251,7 +251,7 @@ class _ErrorSpendingCard extends StatelessWidget {
             children: [
               const Icon(Icons.error_outline, color: Color(AppColors.errorRed), size: 32),
               const SizedBox(height: 8),
-              Text('Fehler beim Laden', style: TextStyle(color: Color(AppColors.errorRed))),
+              Text('Error loading', style: TextStyle(color: Color(AppColors.errorRed))),
             ],
           ),
         ),
@@ -430,7 +430,7 @@ class _TotalSpendingCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  'Gesamtausgaben',
+                  'Total Spending',
                   style: Theme.of(context).textTheme.labelMedium?.copyWith(
                         color: Colors.white,
                       ),

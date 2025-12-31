@@ -11,7 +11,7 @@ import 'package:sparfuchs_ai/core/models/receipt.dart';
 /// with retry logic and error handling
 class GeminiScanService {
   static const String _apiEndpoint =
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent';
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
 
   /// Default timeout for API calls
   static const Duration _defaultTimeout = Duration(seconds: 30);
@@ -174,17 +174,20 @@ class GeminiScanService {
 
       // Parse the JSON from the text
       final receiptJson = jsonDecode(textPart) as Map<String, dynamic>;
-      final receiptDataJson = receiptJson['receipt_data'] as Map<String, dynamic>?;
+      var receiptDataJson = receiptJson['receipt_data'] as Map<String, dynamic>?;
 
       if (receiptDataJson == null) {
         throw GeminiParseException.invalidFormat();
       }
 
+      // Normalize snake_case keys to camelCase for Dart model compatibility
+      receiptDataJson = _normalizeKeys(receiptDataJson) as Map<String, dynamic>;
+
       // Add processing time to ai_metadata
-      if (receiptDataJson['ai_metadata'] != null) {
-        (receiptDataJson['ai_metadata'] as Map<String, dynamic>)['processing_time_ms'] =
+      if (receiptDataJson['aiMetadata'] != null) {
+        (receiptDataJson['aiMetadata'] as Map<String, dynamic>)['processingTimeMs'] =
             processingTimeMs;
-        (receiptDataJson['ai_metadata'] as Map<String, dynamic>)['model_used'] =
+        (receiptDataJson['aiMetadata'] as Map<String, dynamic>)['modelUsed'] =
             'gemini-2.5-flash';
       }
 
@@ -196,6 +199,26 @@ class GeminiScanService {
       if (e is GeminiParseException) rethrow;
       throw GeminiParseException.fromError(e);
     }
+  }
+
+  /// Recursively converts snake_case keys to camelCase
+  dynamic _normalizeKeys(dynamic input) {
+    if (input is Map<String, dynamic>) {
+      return input.map((key, value) {
+        final camelKey = _snakeToCamel(key);
+        return MapEntry(camelKey, _normalizeKeys(value));
+      });
+    } else if (input is List) {
+      return input.map((e) => _normalizeKeys(e)).toList();
+    }
+    return input;
+  }
+
+  /// Converts snake_case to camelCase
+  String _snakeToCamel(String s) {
+    final parts = s.split('_');
+    if (parts.length == 1) return s;
+    return parts.first + parts.skip(1).map((p) => p.isNotEmpty ? '${p[0].toUpperCase()}${p.substring(1)}' : '').join();
   }
 
   /// Gets MIME type from file extension
@@ -318,10 +341,10 @@ Fix common German receipt OCR errors:
 ''';
 }
 
-/// Exception for Gemini API errors with German user-friendly messages
+/// Exception for Gemini API errors with user-friendly messages
 class GeminiApiException implements Exception {
   final String message;
-  final String userMessage; // German user-friendly message
+  final String userMessage; // User-friendly message
   final int? statusCode;
   final String? body;
   final bool isRetryable;
@@ -340,7 +363,7 @@ class GeminiApiException implements Exception {
       case 400:
         return GeminiApiException(
           message: 'Bad request: $body',
-          userMessage: 'Ungültige Anfrage. Bitte versuchen Sie es erneut.',
+          userMessage: 'Invalid request. Please try again.',
           statusCode: statusCode,
           body: body,
           isRetryable: false,
@@ -349,7 +372,7 @@ class GeminiApiException implements Exception {
       case 403:
         return GeminiApiException(
           message: 'Authentication failed',
-          userMessage: 'API-Schlüssel ungültig. Bitte Einstellungen prüfen.',
+          userMessage: 'Invalid API key. Please check settings.',
           statusCode: statusCode,
           body: body,
           isRetryable: false,
@@ -357,7 +380,7 @@ class GeminiApiException implements Exception {
       case 429:
         return GeminiApiException(
           message: 'Rate limit exceeded',
-          userMessage: 'Zu viele Anfragen. Bitte warten Sie einen Moment.',
+          userMessage: 'Too many requests. Please wait a moment.',
           statusCode: statusCode,
           body: body,
           isRetryable: true,
@@ -368,7 +391,7 @@ class GeminiApiException implements Exception {
       case 504:
         return GeminiApiException(
           message: 'Server error: $statusCode',
-          userMessage: 'Server vorübergehend nicht erreichbar. Bitte später erneut versuchen.',
+          userMessage: 'Server temporarily unavailable. Please try again later.',
           statusCode: statusCode,
           body: body,
           isRetryable: true,
@@ -376,7 +399,7 @@ class GeminiApiException implements Exception {
       default:
         return GeminiApiException(
           message: 'HTTP error: $statusCode',
-          userMessage: 'Unbekannter Fehler aufgetreten. Bitte erneut versuchen.',
+          userMessage: 'Unknown error occurred. Please try again.',
           statusCode: statusCode,
           body: body,
           isRetryable: statusCode >= 500,
@@ -388,7 +411,7 @@ class GeminiApiException implements Exception {
   factory GeminiApiException.timeout() {
     return const GeminiApiException(
       message: 'Request timed out',
-      userMessage: 'Zeitüberschreitung. Bitte prüfen Sie Ihre Internetverbindung.',
+      userMessage: 'Request timed out. Please check your internet connection.',
       isRetryable: true,
     );
   }
@@ -397,7 +420,7 @@ class GeminiApiException implements Exception {
   factory GeminiApiException.networkError() {
     return const GeminiApiException(
       message: 'Network error',
-      userMessage: 'Keine Internetverbindung. Bitte Verbindung prüfen.',
+      userMessage: 'No internet connection. Please check your connection.',
       isRetryable: true,
     );
   }
@@ -406,7 +429,7 @@ class GeminiApiException implements Exception {
   factory GeminiApiException.unknown() {
     return const GeminiApiException(
       message: 'Unknown error',
-      userMessage: 'Unbekannter Fehler. Bitte erneut versuchen.',
+      userMessage: 'Unknown error. Please try again.',
       isRetryable: false,
     );
   }
@@ -421,7 +444,7 @@ class GeminiApiException implements Exception {
     }
     return GeminiApiException(
       message: error.toString(),
-      userMessage: 'Fehler beim Scannen. Bitte erneut versuchen.',
+      userMessage: 'Scan failed. Please try again.',
       isRetryable: false,
     );
   }
@@ -430,10 +453,10 @@ class GeminiApiException implements Exception {
   String toString() => 'GeminiApiException: $message (status: $statusCode)';
 }
 
-/// Exception for parsing errors with German user-friendly messages
+/// Exception for parsing errors with user-friendly messages
 class GeminiParseException implements Exception {
   final String message;
-  final String userMessage; // German user-friendly message
+  final String userMessage; // User-friendly message
 
   const GeminiParseException({
     required this.message,
@@ -444,7 +467,7 @@ class GeminiParseException implements Exception {
   factory GeminiParseException.noContent() {
     return const GeminiParseException(
       message: 'No content in AI response',
-      userMessage: 'Keine Daten vom Kassenbon erkannt. Bitte Foto erneut aufnehmen.',
+      userMessage: 'No data found on receipt. Please retake the photo.',
     );
   }
 
@@ -452,7 +475,7 @@ class GeminiParseException implements Exception {
   factory GeminiParseException.invalidJson() {
     return const GeminiParseException(
       message: 'Invalid JSON in response',
-      userMessage: 'Fehler beim Verarbeiten. Bitte erneut scannen.',
+      userMessage: 'Processing error. Please scan again.',
     );
   }
 
@@ -460,7 +483,7 @@ class GeminiParseException implements Exception {
   factory GeminiParseException.invalidFormat() {
     return const GeminiParseException(
       message: 'Invalid receipt format in response',
-      userMessage: 'Kassenbon konnte nicht erkannt werden. Bitte deutlicheres Foto aufnehmen.',
+      userMessage: 'Receipt could not be recognized. Please take a clearer photo.',
     );
   }
 
@@ -468,7 +491,7 @@ class GeminiParseException implements Exception {
   factory GeminiParseException.fromError(Object error) {
     return GeminiParseException(
       message: error.toString(),
-      userMessage: 'Fehler beim Auslesen des Kassenbons. Bitte erneut versuchen.',
+      userMessage: 'Error reading receipt. Please try again.',
     );
   }
 

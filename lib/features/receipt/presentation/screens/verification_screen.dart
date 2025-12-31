@@ -82,35 +82,21 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
       final repository = ref.read(receiptRepositoryProvider);
       final updatedReceipt = _buildUpdatedReceipt();
 
-        // 1. Upload Image
+      if (_isNewReceipt) {
+
+        // 1. Save Image Locally
         String imageUrl = '';
         try {
-          // Try Firebase Storage first
-          imageUrl = await repository.uploadReceiptImage(widget.localImage!);
+          imageUrl = await repository.saveImageLocally(widget.localImage!);
         } catch (e) {
-          debugPrint('Image upload failed: $e');
-          
-          // Fallback: Save locally
-          try {
-            imageUrl = await repository.saveImageLocally(widget.localImage!);
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Upload fehlgeschlagen. Bild wurde lokal gespeichert.'),
-                  backgroundColor: Color(AppColors.warningOrange),
-                ),
-              );
-            }
-          } catch (localError) {
-            debugPrint('Local save failed: $localError');
-             if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Bild konnte nicht gespeichert werden.'),
-                  backgroundColor: Color(AppColors.errorRed),
-                ),
-              );
-            }
+          debugPrint('Local image save failed: $e');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Image could not be saved.'),
+                backgroundColor: Color(AppColors.errorRed),
+              ),
+            );
           }
         }
 
@@ -149,7 +135,7 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Fehler beim Speichern: $e')),
+          SnackBar(content: Text('Error saving: $e')),
         );
         setState(() => _isSaving = false);
       }
@@ -183,7 +169,7 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
             children: [
               CircularProgressIndicator(),
               SizedBox(height: 16),
-              Text('Beleg wird gespeichert...'),
+              Text('Saving receipt...'),
             ],
           ),
         ),
@@ -192,7 +178,7 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Überprüfung'),
+        title: const Text('Verification'),
         centerTitle: true,
         actions: [
           IconButton(
@@ -229,13 +215,13 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Artikel (${_items.length})',
+                  'Items (${_items.length})',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                 ),
                 Text(
-                  'Tippen zum Bearbeiten',
+                  'Tap to edit',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: const Color(AppColors.neutralGray),
                       ),
@@ -297,7 +283,7 @@ class _ReviewNeededBanner extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Überprüfung empfohlen',
+                  'Review Recommended',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         color: const Color(AppColors.warningOrange),
                         fontWeight: FontWeight.bold,
@@ -305,7 +291,7 @@ class _ReviewNeededBanner extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Die KI war sich bei einigen Details nicht sicher.',
+                  'The AI was uncertain about some details.',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: const Color(AppColors.darkNavy),
                       ),
@@ -470,7 +456,7 @@ class _ItemsList extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Text(
-            'Keine Artikel erkannt',
+            'No items detected',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: const Color(AppColors.neutralGray),
                 ),
@@ -665,24 +651,24 @@ class _SummaryCard extends StatelessWidget {
         child: Column(
           children: [
             _SummaryRow(
-              label: 'Zwischensumme',
+              label: 'Subtotal',
               formattedValue: _formatCurrency(totals.subtotal),
             ),
             if (totals.pfandTotal > 0)
               _SummaryRow(
-                label: 'Pfand',
+                label: 'Deposit',
                 formattedValue: _formatCurrency(totals.pfandTotal),
                 valueColor: const Color(AppColors.successGreen),
                 icon: Icons.recycling,
                 iconColor: const Color(AppColors.successGreen),
               ),
             _SummaryRow(
-              label: 'MwSt.',
+              label: 'Tax',
               formattedValue: _formatCurrency(totals.taxAmount),
             ),
             const Divider(height: 24),
             _SummaryRow(
-              label: 'Gesamt',
+              label: 'Total',
               formattedValue: _formatCurrency(totals.grandTotal),
               isTotal: true,
             ),
@@ -766,7 +752,7 @@ class _ActionButtons extends StatelessWidget {
           child: FilledButton.icon(
             onPressed: onConfirm,
             icon: const Icon(Icons.check),
-            label: const Text('Bestätigen & Speichern'),
+            label: const Text('Confirm & Save'),
             style: FilledButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
@@ -780,7 +766,7 @@ class _ActionButtons extends StatelessWidget {
           child: OutlinedButton.icon(
             onPressed: onDiscard,
             icon: const Icon(Icons.delete_outline),
-            label: const Text('Verwerfen'),
+            label: const Text('Discard'),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(

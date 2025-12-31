@@ -64,7 +64,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
       if (mounted) {
         setState(() {
           _isInitializing = false;
-          _errorMessage = 'Kamera konnte nicht gestartet werden: $e';
+          _errorMessage = 'Camera could not start: $e';
         });
       }
     }
@@ -110,7 +110,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Fehler bei der Verarbeitung: $e'),
+            content: Text('Processing error: $e'),
             backgroundColor: AppTheme.errorRed,
             duration: const Duration(seconds: 4),
           ),
@@ -158,7 +158,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Fehler bei der Verarbeitung: $e'),
+                content: Text('Processing error: $e'),
                 backgroundColor: AppTheme.errorRed,
               ),
             );
@@ -171,7 +171,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Fehler beim Auswählen: $e'),
+            content: Text('Selection error: $e'),
             backgroundColor: AppTheme.errorRed,
           ),
         );
@@ -233,7 +233,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
         children: [
           CircularProgressIndicator(color: Colors.white),
           SizedBox(height: 16),
-          Text('Kamera wird gestartet...', style: TextStyle(color: Colors.white)),
+          Text('Starting camera...', style: TextStyle(color: Colors.white)),
         ],
       ),
     );

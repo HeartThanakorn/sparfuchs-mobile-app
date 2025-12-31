@@ -52,6 +52,10 @@ dependencies:
   share_plus: ^12.0.1
   path_provider: ^2.1.5
 
+  # Local Database
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -72,3 +76,4 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
+    - .env
