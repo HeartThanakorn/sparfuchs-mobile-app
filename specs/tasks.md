@@ -405,9 +405,9 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
     - **Property 20: Recipe Suggestion Count and Relevance**
     - **Validates: Requirements 7.1, 7.2**
 
-- [ ] 17. Implement Warranty Monitor
+- [x] 17. Implement Warranty Monitor
 
-  - [ ] 17.1 Create WarrantyService
+  - [x] 17.1 Create WarrantyService
 
     - Detect electronics/fashion items from receipt
     - Create warranty_item records with reminders
