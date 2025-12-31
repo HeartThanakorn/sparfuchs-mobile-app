@@ -1,0 +1,110 @@
+{
+  "@@locale": "en",
+  
+  "appTitle": "SparFuchs AI",
+  "@appTitle": { "description": "App title" },
+  
+  "dashboard": "Dashboard",
+  "receipts": "Receipts",
+  "archive": "Archive",
+  "settings": "Settings",
+  
+  "scan": "Scan Receipt",
+  "scanHint": "Point camera at receipt",
+  
+  "totalSpending": "Total Spending",
+  "thisMonth": "This Month",
+  "thisWeek": "This Week",
+  "today": "Today",
+  
+  "receipt": "Receipt",
+  "receiptsCount": "{count, plural, =0{No receipts} =1{1 receipt} other{{count} receipts}}",
+  "@receiptsCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  
+  "merchant": "Merchant",
+  "date": "Date",
+  "total": "Total",
+  "subtotal": "Subtotal",
+  "tax": "Tax",
+  "pfand": "Deposit (Pfand)",
+  
+  "items": "Items",
+  "itemsCount": "{count, plural, =0{No items} =1{1 item} other{{count} items}}",
+  "@itemsCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  
+  "discounts": "Discounts",
+  "savings": "Savings",
+  "youSaved": "You saved {amount}",
+  "@youSaved": {
+    "placeholders": { "amount": { "type": "String" } }
+  },
+  
+  "categories": "Categories",
+  "groceries": "Groceries",
+  "produce": "Produce",
+  "dairy": "Dairy",
+  "meat": "Meat",
+  "bakery": "Bakery",
+  "frozen": "Frozen",
+  "beverages": "Beverages",
+  "household": "Household",
+  "electronics": "Electronics",
+  "fashion": "Fashion",
+  
+  "household_sharing": "Household Sharing",
+  "createHousehold": "Create Household",
+  "joinHousehold": "Join Household",
+  "leaveHousehold": "Leave Household",
+  "inviteCode": "Invite Code",
+  "members": "Members",
+  
+  "warranty": "Warranty",
+  "returnDeadline": "Return Deadline",
+  "warrantyExpiry": "Warranty Expires",
+  "daysRemaining": "{days, plural, =0{Today} =1{1 day} other{{days} days}}",
+  "@daysRemaining": {
+    "placeholders": { "days": { "type": "int" } }
+  },
+  "markAsReturned": "Mark as Returned",
+  
+  "recipes": "Recipes",
+  "recipeSuggestions": "Recipe Suggestions",
+  "basedOnPurchase": "Based on your purchase",
+  "uses": "Uses: {ingredients}",
+  "@uses": {
+    "placeholders": { "ingredients": { "type": "String" } }
+  },
+  "prepTime": "{minutes} min",
+  "@prepTime": {
+    "placeholders": { "minutes": { "type": "int" } }
+  },
+  "servings": "{count} servings",
+  "@servings": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  
+  "search": "Search",
+  "filter": "Filter",
+  "sortBy": "Sort by",
+  "dateNewest": "Date (newest)",
+  "dateOldest": "Date (oldest)",
+  "amountHighest": "Amount (highest)",
+  "amountLowest": "Amount (lowest)",
+  
+  "save": "Save",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "edit": "Edit",
+  "confirm": "Confirm",
+  "undo": "Undo",
+  "showLater": "Show later",
+  
+  "error": "Error",
+  "tryAgain": "Try Again",
+  "loading": "Loading...",
+  "noResults": "No results found"
+}
