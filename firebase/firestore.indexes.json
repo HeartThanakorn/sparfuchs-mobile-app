@@ -1,0 +1,121 @@
+{
+    "indexes": [
+        {
+            "collectionGroup": "receipts",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "userId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "receiptData.transaction.date",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "receipts",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "householdId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "receiptData.transaction.date",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "receipts",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "userId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "isBookmarked",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "receiptData.transaction.date",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "receipts",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "householdId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "receiptData.merchant.name",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "products",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "normalizedName",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "priceHistory.date",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "products",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "category",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "latestPrice",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "warranty_items",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "userId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "returnDeadline",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "warranty_items",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "userId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "warrantyExpiry",
+                    "order": "ASCENDING"
+                }
+            ]
+        }
+    ],
+    "fieldOverrides": []
+}

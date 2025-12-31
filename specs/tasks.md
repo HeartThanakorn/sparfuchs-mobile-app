@@ -23,7 +23,7 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
     - Implement household-based access control
     - _Requirements: 5.3, 5.6, 9.3_
 
-  - [ ] 1.2 Create Firestore indexes
+  - [x] 1.2 Create Firestore indexes
     - Composite indexes for receipt queries (household_id + date, user_id + date)
     - Index for product price_history queries
     - _Requirements: 4.1, 4.3_
