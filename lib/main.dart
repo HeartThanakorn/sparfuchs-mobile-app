@@ -3,10 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sparfuchs_ai/features/receipt/presentation/screens/camera_screen.dart';
 import 'package:sparfuchs_ai/firebase_options.dart';
+import 'package:sparfuchs_ai/core/config/api_key_config.dart';
 import 'shared/theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Environment Variables (loads .env)
+  await ApiKeyConfig.initialize();
 
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
