@@ -1,19 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:sparfuchs_ai/core/constants/app_constants.dart';
+import 'package:sparfuchs_ai/core/models/receipt.dart';
+import 'package:sparfuchs_ai/features/receipt/data/providers/receipt_providers.dart';
+import 'package:sparfuchs_ai/features/receipt/presentation/screens/camera_screen.dart';
 
 /// Time period options for dashboard filtering
 enum TimePeriod { days, weeks, months }
 
 /// Dashboard screen showing spending overview and recent receipts
-class DashboardScreen extends StatefulWidget {
+class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
   @override
-  State<DashboardScreen> createState() => _DashboardScreenState();
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   TimePeriod _selectedPeriod = TimePeriod.months;
   DateTime _currentDate = DateTime.now();
 
@@ -34,9 +38,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final daysDifference = date.difference(firstDayOfYear).inDays;
     return ((daysDifference + firstDayOfYear.weekday) / 7).ceil();
   }
-
-  // TODO: Replace with actual data from repository
-  double get _totalSpending => 245.67;
 
   String get _periodLabel {
     switch (_selectedPeriod) {
@@ -69,8 +70,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
+  double _calculateTotalSpending(List<Receipt> receipts) {
+    return receipts.where((receipt) {
+      try {
+        final date = DateTime.parse(receipt.receiptData.transaction.date);
+      
+        switch (_selectedPeriod) {
+          case TimePeriod.days:
+            return DateUtils.isSameDay(date, _currentDate);
+          case TimePeriod.weeks:
+            final weekStart = _currentDate.subtract(Duration(days: _currentDate.weekday - 1));
+            final weekEnd = weekStart.add(const Duration(days: 6));
+            // Normalize dates to remove time component for comparison
+            final receiptDate = DateUtils.dateOnly(date);
+            final start = DateUtils.dateOnly(weekStart);
+            final end = DateUtils.dateOnly(weekEnd);
+            return receiptDate.isAtSameMomentAs(start) || 
+                   receiptDate.isAtSameMomentAs(end) || 
+                   (receiptDate.isAfter(start) && receiptDate.isBefore(end));
+          case TimePeriod.months:
+            return date.year == _currentDate.year && date.month == _currentDate.month;
+        }
+      } catch (e) {
+        debugPrint('Error parsing date: ${receipt.receiptData.transaction.date}');
+        return false;
+      }
+    }).fold(0.0, (sum, receipt) => sum + receipt.receiptData.totals.grandTotal);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final receiptsAsync = ref.watch(receiptsStreamProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Dashboard'),
@@ -92,6 +123,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             onPeriodChanged: (period) {
               setState(() {
                 _selectedPeriod = period;
+                // Reset to current date when switching periods
+                _currentDate = DateTime.now();
               });
             },
           ),
@@ -104,10 +137,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
 
           // Total Spending Card
-          _TotalSpendingCard(
-            amount: _totalSpending,
-            formattedAmount: _germanCurrencyFormat.format(_totalSpending),
-            periodLabel: _getPeriodTypeLabel(),
+          receiptsAsync.when(
+            loading: () => const _LoadingSpendingCard(),
+            error: (err, stack) => _ErrorSpendingCard(error: err.toString()),
+            data: (receipts) {
+              final total = _calculateTotalSpending(receipts);
+              return _TotalSpendingCard(
+                amount: total,
+                formattedAmount: _germanCurrencyFormat.format(total),
+                periodLabel: _getPeriodTypeLabel(),
+              );
+            },
           ),
 
           // Placeholder for more content
@@ -135,8 +175,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.large(
-        onPressed: () {
-          // TODO: Navigate to Camera Screen
+        onPressed: () async {
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const CameraScreen()),
+          );
+           if (result != null && context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Bild erfolgreich aufgenommen! 📸'),
+              ),
+            );
+          }
         },
         child: const Icon(Icons.camera_alt, size: 32),
       ),
@@ -152,6 +202,61 @@ class _DashboardScreenState extends State<DashboardScreen> {
       case TimePeriod.months:
         return 'Diesen Monat';
     }
+  }
+}
+
+/// Loading state for spending card
+class _LoadingSpendingCard extends StatelessWidget {
+  const _LoadingSpendingCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Card(
+        elevation: 4,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Container(
+          width: double.infinity,
+          height: 160,
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+             color: const Color(AppColors.primaryTeal).withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: const Center(child: CircularProgressIndicator()),
+        ),
+      ),
+    );
+  }
+}
+
+/// Error state for spending card
+class _ErrorSpendingCard extends StatelessWidget {
+  final String error;
+  const _ErrorSpendingCard({required this.error});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Card(
+        elevation: 0,
+        color: const Color(AppColors.errorRed).withValues(alpha: 0.1),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              const Icon(Icons.error_outline, color: Color(AppColors.errorRed), size: 32),
+              const SizedBox(height: 8),
+              Text('Fehler beim Laden', style: TextStyle(color: Color(AppColors.errorRed))),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 

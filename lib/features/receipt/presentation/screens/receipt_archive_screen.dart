@@ -3,18 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:sparfuchs_ai/core/constants/app_constants.dart';
 import 'package:sparfuchs_ai/core/models/receipt.dart';
-import 'package:sparfuchs_ai/features/receipt/data/repositories/receipt_repository.dart';
-
-/// Provider for ReceiptRepository
-final receiptRepositoryProvider = Provider<ReceiptRepository>((ref) {
-  return ReceiptRepository();
-});
-
-/// Provider for receipts stream
-final receiptsStreamProvider = StreamProvider<List<Receipt>>((ref) {
-  final repository = ref.watch(receiptRepositoryProvider);
-  return repository.watchReceipts();
-});
+import 'package:sparfuchs_ai/features/receipt/data/providers/receipt_providers.dart';
 
 /// Receipt Archive Screen with real Firestore data
 class ReceiptArchiveScreen extends ConsumerStatefulWidget {

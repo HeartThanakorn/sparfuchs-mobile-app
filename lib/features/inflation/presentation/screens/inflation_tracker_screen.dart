@@ -4,20 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:sparfuchs_ai/core/constants/app_constants.dart';
 import 'package:sparfuchs_ai/features/inflation/data/repositories/product_repository.dart';
 
-// Providers
-final productRepositoryProvider = Provider<ProductRepository>((ref) {
-  return ProductRepository();
-});
-
-final trackedProductsStreamProvider = StreamProvider<List<TrackedProduct>>((ref) {
-  final repository = ref.watch(productRepositoryProvider);
-  return repository.watchTrackedProducts();
-});
-
-final trendingProductsFutureProvider = FutureProvider<List<TrackedProduct>>((ref) async {
-  final repository = ref.read(productRepositoryProvider);
-  return repository.getTrendingProducts();
-});
+import 'package:sparfuchs_ai/features/inflation/data/providers/product_providers.dart';
 
 /// Screen for tracking product price changes/inflation
 class InflationTrackerScreen extends ConsumerStatefulWidget {
