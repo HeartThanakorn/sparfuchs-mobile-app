@@ -394,7 +394,7 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
     - **Copilot Prompt:** `Create Flutter RecipeService with suggestRecipes(List<LineItem> items) that filters food categories, calls n8n /webhook/suggest-recipes, returns List<Recipe> sorted by matchedIngredients.length descending, limited to 3`
     - _Requirements: 7.1, 7.2_
 
-  - [ ] 16.2 Build RecipeSuggestionsSheet
+  - [x] 16.2 Build RecipeSuggestionsSheet
 
     - Bottom sheet modal after receipt save
     - Recipe cards with image, name, matched ingredients
