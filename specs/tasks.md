@@ -30,7 +30,7 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
 
 - [ ] 2. Create GeminiScanService (Direct API Call)
 
-  - [ ] 2.1 Implement GeminiScanService class
+  - [x] 2.1 Implement GeminiScanService class
 
     - Call Gemini 2.5 Flash API directly from Flutter
     - Send base64 image with receipt parsing prompt
