@@ -38,7 +38,7 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
     - **Copilot Prompt:** `Create Flutter GeminiScanService with scanReceipt(File image) that calls Gemini 2.5 Flash API with base64 image, returns parsed ReceiptData`
     - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.8_
 
-  - [ ] 2.2 Implement API key security
+  - [x] 2.2 Implement API key security
 
     - Store API key securely (flutter_dotenv or --dart-define)
     - Obfuscate key in release builds
