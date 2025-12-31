@@ -1,19 +1,24 @@
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 
 import 'package:sparfuchs_ai/core/models/receipt.dart';
 
-/// Repository for Receipt CRUD operations with Firestore
+/// Repository for Receipt CRUD operations with Firestore and Storage
 class ReceiptRepository {
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
+  final FirebaseStorage _storage;
 
   ReceiptRepository({
     FirebaseFirestore? firestore,
     FirebaseAuth? auth,
+    FirebaseStorage? storage,
   })  : _firestore = firestore ?? FirebaseFirestore.instance,
-        _auth = auth ?? FirebaseAuth.instance;
+        _auth = auth ?? FirebaseAuth.instance,
+        _storage = storage ?? FirebaseStorage.instance;
 
   /// Get current user ID
   String? get _userId => _auth.currentUser?.uid;
@@ -65,6 +70,18 @@ class ReceiptRepository {
       debugPrint('ReceiptRepository.getReceipt error: $e');
       return null;
     }
+  }
+
+  /// Upload receipt image to Firebase Storage
+  Future<String> uploadReceiptImage(File imageFile) async {
+    final userId = _userId;
+    if (userId == null) throw Exception('User not authenticated');
+
+    final fileName = '${DateTime.now().millisecondsSinceEpoch}_${imageFile.path.split('/').last}';
+    final ref = _storage.ref().child('users/$userId/receipts/$fileName');
+
+    final uploadTask = await ref.putFile(imageFile);
+    return await uploadTask.ref.getDownloadURL();
   }
 
   /// Save a new receipt
