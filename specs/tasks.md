@@ -2,98 +2,65 @@
 
 ## Overview
 
-This implementation plan breaks down the SparFuchs AI receipt scanning app into four phases: Infrastructure & Backend, Flutter App Skeleton & Camera, UI Implementation, and Logic & Polish. Each task includes a Copilot Prompt for direct code generation.
+This implementation plan breaks down the SparFuchs AI receipt scanning app into four phases: AI Integration, Flutter App Skeleton & Camera, UI Implementation, and Logic & Polish. Each task includes a Copilot Prompt for direct code generation.
 
 **Tech Stack:**
 
 - Frontend: Flutter (Dart)
-- Backend: n8n (self-hosted on Hostinger VPS via Docker)
-- AI: Gemini 3 Flash (Google AI Studio API) or GPT-4o fallback
+- AI: Gemini 1.5 Flash (Google AI Studio API - direct call from Flutter)
 - Database: Firestore
 - Storage: Firebase Cloud Storage
 
 ## Tasks
 
-### Phase 1: Infrastructure & Backend (The Foundation)
+### Phase 1: AI Integration & Firebase Setup
 
-- [ ] 1. Set up VPS and deploy n8n
+- [x] 1. Configure Firebase infrastructure
 
-  - [x] 1.1 Configure Hostinger VPS with Docker & Docker Compose
-
-    - SSH into VPS, install Docker Engine and Docker Compose
-    - Create docker-compose.yml for n8n with persistent volumes
-    - Configure nginx reverse proxy with SSL (Let's Encrypt)
-    - **Copilot Prompt:** `Create a docker-compose.yml for n8n with traefik reverse proxy, SSL, and persistent PostgreSQL database`
-    - _Requirements: 9.1, 9.2_
-
-  - [ ] 1.2 Deploy n8n self-hosted instance
-    - Pull n8n Docker image and start container
-    - Configure environment variables (N8N_HOST, WEBHOOK_URL)
-    - Set up basic authentication for n8n dashboard
-    - **Copilot Prompt:** `Create n8n environment configuration with webhook URL, encryption key, and timezone settings for German locale`
-    - _Requirements: 9.1, 9.2_
-
-- [ ] 2. Configure Firebase infrastructure
-
-  - [x] 2.1 Set up Firestore security rules
+  - [x] 1.1 Set up Firestore security rules
 
     - Create rules for users, households, receipts, products, warranty_items collections
     - Implement household-based access control
-    - **Copilot Prompt:** `Write Firestore security rules where users can read/write their own receipts, and household members can read receipts with matching household_id`
     - _Requirements: 5.3, 5.6, 9.3_
 
-  - [ ] 2.2 Create Firestore indexes
+  - [ ] 1.2 Create Firestore indexes
     - Composite indexes for receipt queries (household_id + date, user_id + date)
     - Index for product price_history queries
-    - **Copilot Prompt:** `Create firestore.indexes.json with composite indexes for receipts by household_id and transaction.date descending`
     - _Requirements: 4.1, 4.3_
 
-- [ ] 3. Create n8n Receipt Scanning Workflow
+- [ ] 2. Create GeminiScanService (Direct API Call)
 
-  - [ ] 3.1 Implement Webhook Node for image receipt
+  - [ ] 2.1 Implement GeminiScanService class
 
-    - Configure POST endpoint /webhook/scan-receipt
-    - Accept image_url, user_id, household_id, language parameters
-    - **Copilot Prompt:** `Create n8n webhook node configuration that accepts JSON body with image_url, user_id, household_id fields`
-    - _Requirements: 1.1_
+    - Call Gemini 1.5 Flash API directly from Flutter
+    - Send base64 image with receipt parsing prompt
+    - Parse JSON response into ReceiptData
+    - **Copilot Prompt:** `Create Flutter GeminiScanService with scanReceipt(File image) that calls Gemini 1.5 Flash API with base64 image, returns parsed ReceiptData`
+    - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.8_
 
-  - [ ] 3.2 Implement AI Node with Gemini 3 Flash
+  - [ ] 2.2 Implement API key security
 
-    - Configure HTTP Request to Google AI Studio API (generativelanguage.googleapis.com)
-    - Send image as base64 with the "Golden Prompt" from design
-    - Handle multimodal input (image + text prompt)
-    - **Copilot Prompt:** `Create n8n HTTP Request node to call Gemini 3 Flash API with multimodal input: base64 image and system prompt for German receipt parsing`
-    - _Requirements: 1.2, 1.3, 1.4, 1.5, 1.6, 1.8_
+    - Store API key securely (flutter_dotenv or --dart-define)
+    - Obfuscate key in release builds
+    - **Copilot Prompt:** `Create secure API key management using flutter_dotenv for debug and --dart-define for release builds`
+    - _Requirements: 9.3_
 
-  - [ ] 3.3 Implement JSON Validation Node
+  - [ ] 2.3 Implement error handling and retry logic
 
-    - Validate AI response matches receipt_data schema
-    - Add confidence_score threshold check
-    - Enrich with processing_time_ms and model_used
-    - **Copilot Prompt:** `Create n8n Function node that validates receipt JSON schema, checks confidence_score >= 0.5, and adds ai_metadata.processing_time_ms`
-    - _Requirements: 1.7, 11.1_
+    - Handle API errors, timeouts, rate limits
+    - Implement exponential backoff retry
+    - **Copilot Prompt:** `Add error handling to GeminiScanService with retry logic, timeout handling, and user-friendly error messages in German`
+    - _Requirements: 11.4_
 
-  - [ ] 3.4 Implement Firestore Write Node
-
-    - Write validated receipt to receipts collection
-    - Generate unique receipt_id
-    - Set created_at and updated_at timestamps
-    - **Copilot Prompt:** `Create n8n Firestore node to write receipt document with auto-generated ID, timestamps, and return receipt_id in response`
-    - _Requirements: 2.7_
-
-  - [ ] 3.5 Write property test for JSON validation
-
+  - [ ] 2.4 Write property test for JSON validation
     - **Property 7: Receipt Serialization Round-Trip**
     - **Validates: Requirements 2.7, 11.1, 11.2, 11.3**
 
-  - [ ] 3.6 Write property test for malformed JSON handling
-    - **Property 24: Malformed JSON Error Handling**
-    - **Validates: Requirements 11.4**
+- [ ] 3. Checkpoint - Verify Gemini API integration
+  - Test image scanning with sample receipt
+  - Verify ReceiptData parsing
+  - Ensure all tests pass
 
-- [ ] 4. Checkpoint - Verify n8n workflow
-  - Test webhook with sample receipt image
-  - Verify Firestore document creation
-  - Ensure all tests pass, ask the user if questions arise.
 
 ### Phase 2: Flutter App Skeleton & Camera
 
