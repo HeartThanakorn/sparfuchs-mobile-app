@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:sparfuchs_ai/core/services/local_database_service.dart';
 import 'package:sparfuchs_ai/shared/navigation/main_navigation_screen.dart';
 import 'package:sparfuchs_ai/firebase_options.dart';
@@ -15,6 +16,9 @@ void main() async {
 
   // Initialize Local Database (Hive)
   await LocalDatabaseService.initialize();
+
+  // Initialize locale data for DateFormat
+  await initializeDateFormatting('de_DE', null);
 
   // Initialize Firebase (minimal - for potential analytics, optional)
   try {

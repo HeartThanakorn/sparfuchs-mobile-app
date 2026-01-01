@@ -56,33 +56,81 @@ class _ReceiptArchiveScreenState extends ConsumerState<ReceiptArchiveScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final receiptsAsync = ref.watch(receiptsStreamProvider);
+    try {
+      // Direct Hive access (works better than StreamProvider)
+      final List<Receipt> receipts = _loadReceiptsFromHive();
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Receipt Archive'),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              // TODO: Navigate to search
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: () => _showFilterSheet(context),
-          ),
-        ],
-      ),
-      body: receiptsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => _buildErrorState(error.toString()),
-        data: (receipts) => receipts.isEmpty
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Receipt Archive'),
+          centerTitle: true,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: () => setState(() {}),
+            ),
+            IconButton(
+              icon: const Icon(Icons.filter_list),
+              onPressed: () => _showFilterSheet(context),
+            ),
+          ],
+        ),
+        body: receipts.isEmpty
             ? _buildEmptyState()
             : _buildReceiptList(receipts),
-      ),
-    );
+      );
+    } catch (e) {
+      // Show error instead of crashing
+      debugPrint('Archive build error: $e');
+      return Scaffold(
+        appBar: AppBar(title: const Text('Receipt Archive')),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, size: 64, color: Colors.red),
+              const SizedBox(height: 16),
+              Text('Error: $e', style: const TextStyle(color: Colors.red)),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => setState(() {}),
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+  }
+
+  /// Load receipts directly from Hive with proper Map conversion
+  List<Receipt> _loadReceiptsFromHive() {
+    try {
+      final box = LocalDatabaseService.receiptsBox;
+      final receipts = <Receipt>[];
+      
+      for (final key in box.keys) {
+        try {
+          final rawData = box.get(key);
+          if (rawData != null) {
+            final data = _deepCopyMap(rawData as Map);
+            data['receiptId'] = key.toString();
+            receipts.add(Receipt.fromJson(data));
+          }
+        } catch (e) {
+          debugPrint('Error parsing receipt $key: $e');
+        }
+      }
+      
+      // Sort by createdAt descending
+      if (receipts.isNotEmpty) {
+        receipts.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      }
+      return receipts;
+    } catch (e) {
+      debugPrint('Error loading receipts: $e');
+      return [];
+    }
   }
 
   Widget _buildErrorState(String error) {

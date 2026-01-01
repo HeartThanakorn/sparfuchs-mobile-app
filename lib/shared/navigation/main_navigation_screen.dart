@@ -17,12 +17,13 @@ class MainNavigationScreen extends ConsumerStatefulWidget {
 
 class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
   int _currentIndex = 0;
+  int _archiveRefreshKey = 0; // Increment to force Archive rebuild
 
-  final List<Widget> _screens = const [
-    DashboardScreen(),
-    ReceiptArchiveScreen(),
-    _CameraPlaceholder(), // Will navigate to CameraScreen
-    SettingsScreen(),
+  List<Widget> get _screens => [
+    const DashboardScreen(),
+    ReceiptArchiveScreen(key: ValueKey('archive_$_archiveRefreshKey')),
+    const _CameraPlaceholder(), // Will navigate to CameraScreen
+    const SettingsScreen(),
   ];
 
   @override
@@ -81,8 +82,11 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     );
     
     if (result == true && mounted) {
-      // Receipt saved successfully, switch to Archive tab
-      setState(() => _currentIndex = 1);
+      // Receipt saved successfully, switch to Archive tab and refresh it
+      setState(() {
+        _archiveRefreshKey++; // Force Archive to rebuild with new data
+        _currentIndex = 1;
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Receipt saved! 📸'),

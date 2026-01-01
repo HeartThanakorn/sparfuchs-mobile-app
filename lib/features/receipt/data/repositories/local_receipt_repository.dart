@@ -16,12 +16,22 @@ class LocalReceiptRepository {
   /// Stream of all receipts (sorted by date descending)
   Stream<List<Receipt>> watchReceipts() async* {
     // Emit immediately on subscription
-    yield _getAllReceipts();
+    try {
+      yield _getAllReceipts();
+    } catch (e) {
+      debugPrint('watchReceipts initial emit error: $e');
+      yield <Receipt>[];
+    }
     
     // Then poll every second for updates
     while (true) {
       await Future.delayed(const Duration(seconds: 1));
-      yield _getAllReceipts();
+      try {
+        yield _getAllReceipts();
+      } catch (e) {
+        debugPrint('watchReceipts poll error: $e');
+        // Don't break, just skip this emission
+      }
     }
   }
 
@@ -143,7 +153,9 @@ class LocalReceiptRepository {
       'updatedAt': now.toIso8601String(),
     };
 
-    await LocalDatabaseService.receiptsBox.put(receiptId, data);
+    final box = LocalDatabaseService.receiptsBox;
+    await box.put(receiptId, data);
+    await box.flush(); // Ensure data is written to disk immediately
     debugPrint('LocalReceiptRepository: Saved receipt $receiptId');
     return receiptId;
   }
