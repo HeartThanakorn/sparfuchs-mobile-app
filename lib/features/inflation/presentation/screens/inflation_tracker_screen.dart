@@ -44,7 +44,7 @@ class _InflationTrackerScreenState
               padding: const EdgeInsets.all(16.0),
               child: SearchBar(
                 controller: _searchController,
-                hintText: 'Produkt suchen...',
+                hintText: 'Search products...',
                 leading: const Icon(Icons.search, color: Color(AppColors.neutralGray)),
                 elevation: WidgetStateProperty.all(1),
                 backgroundColor: WidgetStateProperty.all(Colors.white),
@@ -122,7 +122,7 @@ class _InflationTrackerScreenState
             ),
             data: (products) => products.isEmpty
                 ? const SliverFillRemaining(
-                    child: Center(child: Text('Noch keine Produkte getrackt')),
+                    child: Center(child: Text('No products tracked yet')),
                   )
                 : SliverList(
                     delegate: SliverChildBuilderDelegate(

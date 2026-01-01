@@ -5,9 +5,8 @@ import 'package:intl/intl.dart';
 import 'package:sparfuchs_ai/core/constants/app_constants.dart';
 import 'package:sparfuchs_ai/core/models/receipt.dart';
 import 'package:sparfuchs_ai/core/services/local_database_service.dart';
-import 'package:sparfuchs_ai/features/inflation/presentation/screens/category_analysis_screen.dart';
 
-/// Statistics Screen with charts and category breakdown
+/// Statistics Screen - Simplified with functional elements only
 class StatisticsScreen extends ConsumerStatefulWidget {
   const StatisticsScreen({super.key});
 
@@ -16,9 +15,6 @@ class StatisticsScreen extends ConsumerStatefulWidget {
 }
 
 class _StatisticsScreenState extends ConsumerState<StatisticsScreen> {
-  int _selectedPeriodIndex = 2; // 0=Days, 1=Weeks, 2=Months
-  final List<String> _periods = ['Days', 'Weeks', 'Months'];
-
   static final _currencyFormat = NumberFormat.currency(
     locale: 'en_US',
     symbol: '€',
@@ -48,22 +44,15 @@ class _StatisticsScreenState extends ConsumerState<StatisticsScreen> {
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        title: const Text('All Categories'),
+        title: const Text('Statistics'),
         centerTitle: true,
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(AppColors.darkNavy),
+        backgroundColor: const Color(AppColors.primaryTeal),
+        foregroundColor: Colors.white,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
       ),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Period Tabs
-            _buildPeriodTabs(),
-            
             const SizedBox(height: 16),
             
             // Bar Chart
@@ -71,32 +60,27 @@ class _StatisticsScreenState extends ConsumerState<StatisticsScreen> {
             
             const SizedBox(height: 24),
             
-            // Date & Total Header
+            // Total Spending Header
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    DateFormat('dd.MM.yyyy', 'en_US').format(DateTime.now()),
-                    style: const TextStyle(
-                      fontSize: 16,
+                  const Text(
+                    'Total Spending',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
                       color: Color(AppColors.darkNavy),
                     ),
                   ),
-                  Row(
-                    children: [
-                      Text(
-                        _currencyFormat.format(totalSpending),
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color(AppColors.darkNavy),
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Icon(Icons.info_outline, size: 18, color: Colors.grey.shade400),
-                    ],
+                  Text(
+                    _currencyFormat.format(totalSpending),
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Color(AppColors.primaryTeal),
+                    ),
                   ),
                 ],
               ),
@@ -110,41 +94,6 @@ class _StatisticsScreenState extends ConsumerState<StatisticsScreen> {
             const SizedBox(height: 100),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildPeriodTabs() {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade200,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: List.generate(_periods.length, (index) {
-          final isSelected = index == _selectedPeriodIndex;
-          return GestureDetector(
-            onTap: () => setState(() => _selectedPeriodIndex = index),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              decoration: BoxDecoration(
-                color: isSelected ? const Color(AppColors.darkNavy) : Colors.transparent,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                _periods[index],
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: isSelected ? Colors.white : Colors.grey.shade600,
-                ),
-              ),
-            ),
-          );
-        }),
       ),
     );
   }
@@ -204,7 +153,7 @@ class _StatisticsScreenState extends ConsumerState<StatisticsScreen> {
                 reservedSize: 40,
                 getTitlesWidget: (value, meta) {
                   return Text(
-                    '${value.toInt()}',
+                    '€${value.toInt()}',
                     style: const TextStyle(fontSize: 10, color: Colors.grey),
                   );
                 },
@@ -292,9 +241,9 @@ class _StatisticsScreenState extends ConsumerState<StatisticsScreen> {
             color: color.withOpacity(0.1),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: ListTile(
-            leading: Row(
-              mainAxisSize: MainAxisSize.min,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
               children: [
                 Container(
                   width: 4,
@@ -313,18 +262,16 @@ class _StatisticsScreenState extends ConsumerState<StatisticsScreen> {
                     color: color,
                   ),
                 ),
-              ],
-            ),
-            title: Text(
-              entry.key,
-              style: const TextStyle(
-                fontWeight: FontWeight.w500,
-                color: Color(AppColors.darkNavy),
-              ),
-            ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    entry.key,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w500,
+                      color: Color(AppColors.darkNavy),
+                    ),
+                  ),
+                ),
                 Text(
                   _currencyFormat.format(entry.value),
                   style: const TextStyle(
@@ -332,11 +279,8 @@ class _StatisticsScreenState extends ConsumerState<StatisticsScreen> {
                     color: Color(AppColors.darkNavy),
                   ),
                 ),
-                const SizedBox(width: 4),
-                const Icon(Icons.chevron_right, color: Colors.grey),
               ],
             ),
-            onTap: () => _onCategoryTap(entry.key),
           ),
         );
       }).toList(),
@@ -443,12 +387,5 @@ class _StatisticsScreenState extends ConsumerState<StatisticsScreen> {
     }
 
     return sorted;
-  }
-
-  void _onCategoryTap(String category) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const CategoryAnalysisScreen()),
-    );
   }
 }

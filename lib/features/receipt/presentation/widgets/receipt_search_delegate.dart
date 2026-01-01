@@ -23,7 +23,7 @@ class ReceiptSearchDelegate extends SearchDelegate<Receipt?> {
     required this.receipts,
     required this.onReceiptSelected,
   }) : super(
-          searchFieldLabel: 'Suche nach Händler oder Produkt...',
+          searchFieldLabel: 'Search merchant or product...',
           keyboardType: TextInputType.text,
           textInputAction: TextInputAction.search,
         );
@@ -55,7 +55,7 @@ class ReceiptSearchDelegate extends SearchDelegate<Receipt?> {
               : const Color(AppColors.neutralGray),
         ),
         onPressed: () => _showDateRangePicker(context),
-        tooltip: 'Zeitraum filtern',
+        tooltip: 'Filter by date',
       ),
       // Clear query
       if (query.isNotEmpty)
@@ -272,10 +272,10 @@ class ReceiptSearchDelegate extends SearchDelegate<Receipt?> {
       lastDate: now,
       initialDateRange: initialRange,
       locale: const Locale('de', 'DE'),
-      helpText: 'Zeitraum wählen',
-      cancelText: 'Abbrechen',
-      confirmText: 'Bestätigen',
-      saveText: 'Speichern',
+      helpText: 'Select date range',
+      cancelText: 'Cancel',
+      confirmText: 'Confirm',
+      saveText: 'Save',
     );
 
     if (result != null) {

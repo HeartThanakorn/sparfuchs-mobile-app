@@ -205,7 +205,7 @@ class ExpenseChart extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Noch keine Ausgabendaten',
+              'No expense data yet',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: const Color(AppColors.neutralGray),
                   ),

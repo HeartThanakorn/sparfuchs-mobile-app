@@ -102,7 +102,7 @@ class _EditLineItemDialogState extends State<EditLineItemDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Artikel bearbeiten'),
+      title: const Text('Edit Item'),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -182,7 +182,7 @@ class _EditLineItemDialogState extends State<EditLineItemDialog> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Gesamtpreis:',
+                    'Total price:',
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
                   Text(
@@ -201,11 +201,11 @@ class _EditLineItemDialogState extends State<EditLineItemDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Abbrechen'),
+          child: const Text('Cancel'),
         ),
         FilledButton(
           onPressed: _onSave,
-          child: const Text('Speichern'),
+          child: const Text('Save'),
         ),
       ],
     );

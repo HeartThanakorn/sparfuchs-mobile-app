@@ -42,8 +42,8 @@ class _BookmarksScreenState extends ConsumerState<BookmarksScreen> {
       appBar: AppBar(
         title: const Text('Bookmarks'),
         centerTitle: true,
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(AppColors.darkNavy),
+        backgroundColor: const Color(AppColors.primaryTeal),
+        foregroundColor: Colors.white,
         elevation: 0,
       ),
       body: Column(

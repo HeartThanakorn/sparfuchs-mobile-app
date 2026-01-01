@@ -311,7 +311,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
                 color: Colors.black54, borderRadius: BorderRadius.circular(16)),
-            child: const Text('Kassenbon im Rahmen ausrichten',
+            child: const Text('Align receipt within frame',
                 style: TextStyle(color: Colors.white, fontSize: 12)),
           ),
           const SizedBox(width: 48),
@@ -332,7 +332,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
           children: [
             _ActionButton(
                 icon: Icons.photo_library,
-                label: 'Galerie',
+                label: 'Gallery',
                 onTap: _pickFromGallery),
             _CaptureButton(onTap: _captureImage, isCapturing: _isCapturing),
             _ActionButton(
@@ -360,7 +360,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
                     fontSize: 16,
                     fontWeight: FontWeight.bold)),
             SizedBox(height: 8),
-            Text('Das kann einen Moment dauern',
+            Text('This may take a moment',
                 style: TextStyle(color: Colors.white70, fontSize: 14)),
           ],
         ),

@@ -144,7 +144,7 @@ class _BookmarksViewState extends ConsumerState<BookmarksView> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Markiere wichtige Belege mit ★',
+            'Mark important receipts with ★',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: const Color(AppColors.neutralGray),
                 ),

@@ -86,9 +86,9 @@ class WarrantyListScreen extends ConsumerWidget {
     
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('${item.itemDescription} als zurückgegeben markiert'),
+        content: Text('${item.itemDescription} marked as returned'),
         action: SnackBarAction(
-          label: 'Rückgängig',
+          label: 'Undo',
           onPressed: () {
             // TODO: Implement undo logic if needed
           },
@@ -134,7 +134,7 @@ class _WarrantyItemTile extends StatelessWidget {
             Icon(Icons.check_circle, color: Colors.white),
             SizedBox(width: 8),
             Text(
-              'Zurückgegeben',
+              'Returned',
               style: TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
@@ -147,11 +147,11 @@ class _WarrantyItemTile extends StatelessWidget {
         final confirm = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('Artikel zurückgegeben?'),
-            content: Text('Möchten Sie "${item.itemDescription}" als zurückgegeben markieren?'),
+            title: const Text('Item Returned?'),
+            content: Text('Mark "${item.itemDescription}" as returned?'),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Abbrechen')),
-              TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Ja, markieren')),
+              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+              TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Yes, mark')),
             ],
           ),
         );

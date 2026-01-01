@@ -192,7 +192,7 @@ class _ReceiptArchiveScreenState extends ConsumerState<ReceiptArchiveScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Scanne deinen ersten Kassenbon!',
+            'Scan your first receipt!',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: const Color(AppColors.neutralGray),
                 ),
@@ -289,7 +289,7 @@ class _ReceiptArchiveScreenState extends ConsumerState<ReceiptArchiveScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.calendar_today),
-              title: const Text('Zeitraum wählen'),
+              title: const Text('Select date range'),
               trailing: const Icon(Icons.chevron_right),
               onTap: () {},
             ),

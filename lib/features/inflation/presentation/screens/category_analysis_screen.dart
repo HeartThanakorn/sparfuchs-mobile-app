@@ -45,8 +45,8 @@ class _CategoryAnalysisScreenState extends ConsumerState<CategoryAnalysisScreen>
       appBar: AppBar(
         title: const Text('Category Analysis'),
         centerTitle: true,
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(AppColors.darkNavy),
+        backgroundColor: const Color(AppColors.primaryTeal),
+        foregroundColor: Colors.white,
         elevation: 0,
       ),
       body: SingleChildScrollView(

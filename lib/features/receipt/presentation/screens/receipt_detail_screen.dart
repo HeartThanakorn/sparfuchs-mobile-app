@@ -162,7 +162,6 @@ class _ReceiptDetailScreenState extends ConsumerState<ReceiptDetailScreen> {
             ),
             title: data.merchant.name,
             trailing: 'Supermarket',
-            showArrow: true,
           ),
           const Divider(height: 1),
           
@@ -179,8 +178,6 @@ class _ReceiptDetailScreenState extends ConsumerState<ReceiptDetailScreen> {
                   time != null ? _timeFormat.format(time) : data.transaction.time.substring(0, 5),
                   style: const TextStyle(fontSize: 14),
                 ),
-                const SizedBox(width: 4),
-                const Icon(Icons.chevron_right, color: Color(AppColors.neutralGray)),
               ],
             ),
           ),
@@ -192,7 +189,6 @@ class _ReceiptDetailScreenState extends ConsumerState<ReceiptDetailScreen> {
               title: 'Discount:',
               trailing: _currencyFormat.format(totalDiscount),
               trailingColor: const Color(AppColors.successGreen),
-              showArrow: true,
             ),
           ],
           
@@ -206,7 +202,6 @@ class _ReceiptDetailScreenState extends ConsumerState<ReceiptDetailScreen> {
             trailingColor: totalDiscount != 0 
                 ? const Color(AppColors.successGreen)
                 : null,
-            showArrow: true,
           ),
           
           // Sum Row
@@ -216,17 +211,6 @@ class _ReceiptDetailScreenState extends ConsumerState<ReceiptDetailScreen> {
             trailing: _currencyFormat.format(data.totals.grandTotal),
             titleBold: true,
             trailingBold: true,
-            showArrow: true,
-          ),
-          
-          // Note Row
-          const Divider(height: 1),
-          _buildInfoRow(
-            title: 'Note (Optional)',
-            titleColor: const Color(AppColors.neutralGray),
-            trailing: 'Add',
-            trailingColor: const Color(AppColors.primaryTeal),
-            showArrow: true,
           ),
         ],
       ),
@@ -426,20 +410,14 @@ class _ReceiptDetailScreenState extends ConsumerState<ReceiptDetailScreen> {
                 ),
               ),
               
-              // Price & Arrow
-              Row(
-                children: [
-                  Text(
-                    _currencyFormat.format(item.totalPrice),
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: Color(AppColors.darkNavy),
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  const Icon(Icons.chevron_right, color: Color(AppColors.neutralGray)),
-                ],
+              // Price
+              Text(
+                _currencyFormat.format(item.totalPrice),
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: Color(AppColors.darkNavy),
+                ),
               ),
             ],
           ),

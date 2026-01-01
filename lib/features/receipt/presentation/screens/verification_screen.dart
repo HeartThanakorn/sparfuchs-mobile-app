@@ -374,7 +374,7 @@ class _PurchaseInfoCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Händler',
+                    'Merchant',
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: const Color(AppColors.neutralGray),
                         ),
@@ -745,6 +745,8 @@ class _ActionButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bottomPadding = MediaQuery.of(context).viewPadding.bottom;
+    
     return Column(
       children: [
         SizedBox(
@@ -775,6 +777,8 @@ class _ActionButtons extends StatelessWidget {
             ),
           ),
         ),
+        // Extra padding for system navigation bar
+        SizedBox(height: bottomPadding > 0 ? bottomPadding : 16),
       ],
     );
   }
