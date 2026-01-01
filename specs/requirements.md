@@ -203,9 +203,34 @@ SparFuchs AI is a German receipt scanning and expense tracking mobile applicatio
     ],
     "ai_metadata": {
       "confidence_score": "number", // 0.0-1.0, alert if < 0.8
-      "model_used": "string", // "gpt-4o" | "claude-3.5-sonnet"
+      "model_used": "string", // "gemini-2.5-flash"
       "processing_time_ms": "number"
     }
   }
 }
 ```
+
+### Requirement 12: Settings & Preferences
+
+**User Story:** As a user, I want to customize the app appearance and manage my data, so that I can personalize my experience.
+
+#### Acceptance Criteria
+
+1. WHEN a user opens Settings, THE SparFuchs_App SHALL display Theme, Storage, and About sections
+2. WHEN a user toggles Theme, THE SparFuchs_App SHALL switch between Light and Dark mode immediately
+3. WHEN a user taps "Clear All Data", THE SparFuchs_App SHALL show a confirmation dialog warning about permanent deletion
+4. WHEN confirmed, THE SparFuchs_App SHALL delete all receipts from local storage (Hive)
+5. WHEN viewing Storage info, THE SparFuchs_App SHALL show the number of receipts stored
+6. THE SparFuchs_App SHALL display in English only (no language picker)
+
+### Requirement 13: Local-First Storage
+
+**User Story:** As a user, I want my data stored locally on my device, so that I can use the app without requiring internet for data access.
+
+#### Acceptance Criteria
+
+1. WHEN a user saves a receipt, THE SparFuchs_App SHALL persist it to Hive (local database)
+2. WHEN a user opens the Archive, THE SparFuchs_App SHALL load receipts from local storage
+3. WHEN the app starts, THE SparFuchs_App SHALL NOT require authentication or network access for viewing data
+4. WHEN a user opens a saved receipt, THE SparFuchs_App SHALL display all details from local storage
+

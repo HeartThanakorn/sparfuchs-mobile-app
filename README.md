@@ -1,61 +1,68 @@
-# SparFuchs AI
+# SparFuchs AI 🦊
 
-A receipt scanning and expense tracking app for the German market. Built with Flutter and powered by Gemini 2.5 Flash for accurate German receipt parsing.
+A smart receipt scanning and expense tracking app. Built with Flutter and powered by Gemini 2.5 Flash for accurate receipt parsing.
 
-## What it does
+## Features
 
-SparFuchs AI takes a photo of your receipt and automatically extracts all the purchase data. It handles German-specific things like Pfand (bottle deposits), the two VAT rates (7% and 19%), and common OCR errors from receipt printers.
+### ✅ Implemented
 
-### Core functionality
+| Feature | Description |
+|---------|-------------|
+| 📸 **AI Receipt Scanning** | Gemini 2.5 Flash extracts items, prices, totals, categories |
+| 🧾 **Receipt Details** | Premium UI with purchase info, goods list, category colors |
+| 📊 **Statistics** | Stacked bar charts, category breakdown with percentages |
+| 🔖 **Bookmarks** | Save favorite receipts, sort & filter by date |
+| 🏠 **Dashboard** | Finances overview with tabs, balance, receipt list |
+| 📈 **Category Analysis** | Pie charts showing spending breakdown |
+| 🌓 **Dark Mode** | Toggle light/dark theme in Settings |
+| 🗑️ **Clear Data** | Delete all receipts from Settings |
+| 💾 **Local Storage** | Hive database (no cloud required) |
 
-- Camera-based receipt scanning with AI extraction
-- Expense dashboard with category breakdowns
-- Searchable receipt archive
-- Household sharing for couples/families
-- Inflation tracker (price history over time)
-- Recipe suggestions based on purchased groceries
-- Warranty and return deadline reminders
+### 🔜 Planned
 
-## Tech stack
+- Household sharing for families
+- Inflation tracker (price history)
+- Recipe suggestions
+- Warranty reminders
+
+## Tech Stack
 
 | Component | Technology |
 |-----------|------------|
-| Frontend | Flutter (Dart) with Riverpod |
-| AI | Gemini 2.5 Flash (Direct REST API) |
-| Database | Firestore (Production Mode) |
-| Storage | Firebase Cloud Storage (Primary) / Local Device Storage (Fallback) |
-| Auth | Firebase Authentication |
+| Frontend | Flutter + Riverpod |
+| AI | Gemini 2.5 Flash |
+| Storage | Hive (Local-first) |
+| Charts | fl_chart |
 
 ## Architecture
 
 ```
-Flutter App  -->  Gemini 2.5 Flash API  -->  Firestore
-                      (direct call)
+Camera → Gemini API → Hive (Local DB)
+                ↓
+         Premium UI Screens
 ```
 
-No backend server required. The app calls the Gemini API directly from Flutter, which keeps things simple and free.
+No backend server required. All data stored locally on device.
 
-## Project structure
+## Project Structure
 
 ```
 lib/
-  core/           # Shared models, utils, config
-  features/       # Feature-based modules
-    receipt/      # Scanning, archive, verification
-    dashboard/    # Expense charts and stats
-    household/    # Multi-user sharing
-    inflation/    # Price tracking
-    recipe/       # Recipe suggestions
-    warranty/     # Return/warranty reminders
-    gdpr/         # Data export and deletion
+  core/           # Models, constants, services
+  features/
+    dashboard/    # Finances overview, statistics
+    receipt/      # Scanning, archive, details, bookmarks
+    settings/     # Theme, clear data
+    inflation/    # Category analysis
+  shared/         # Navigation, theme
 ```
 
-## Getting started
+## Getting Started
 
 ### Requirements
 
 - Flutter SDK 3.x
-- A Gemini API key from Google AI Studio
+- Gemini API key from [Google AI Studio](https://ai.google.dev)
 
 ### Setup
 
@@ -65,18 +72,26 @@ cd sparfuchs-mobile-app
 
 flutter pub get
 
-# Create .env file with your API key
+# Create .env file
 cp .env.example .env
-# Edit .env and add your GEMINI_API_KEY
+# Add: GEMINI_API_KEY=your_key_here
 
 flutter run
 ```
 
-For release builds, pass the API key at compile time:
+### Build APK
 
 ```bash
-flutter build apk --dart-define=GEMINI_API_KEY=your_key_here
+flutter build apk --release
 ```
+
+APK location: `build/app/outputs/flutter-apk/app-release.apk`
+
+## Screenshots
+
+| Dashboard | Receipt Details | Statistics |
+|-----------|-----------------|------------|
+| Finances Overview with tabs | Purchase info & items | Bar charts & categories |
 
 ## Testing
 
@@ -84,18 +99,12 @@ flutter build apk --dart-define=GEMINI_API_KEY=your_key_here
 flutter test
 ```
 
-Currently has 187 tests covering receipt parsing, household membership, search/filter, GDPR compliance, and more.
+## Documentation
 
-## Specs
-
-The full specification documents are in `specs/`:
-
-- `requirements.md` - Feature requirements
-- `design.md` - Technical design and data models
-- `tasks.md` - Implementation checklist
+- `specs/requirements.md` - Feature requirements
+- `specs/design.md` - Technical design
+- `specs/tasks.md` - Implementation status
 
 ## License
 
 Copyright 2025 Thanakorn Thajan. All rights reserved.
-
-Proprietary software. Do not copy, modify, or distribute without permission.

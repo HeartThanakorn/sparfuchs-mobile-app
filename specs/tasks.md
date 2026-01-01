@@ -436,6 +436,33 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
   - Test all killer features (Inflation, Recipes, Warranty)
   - Ensure all tests pass, ask the user if questions arise.
 
+### Phase 5: Premium UI & Local-First (January 2026)
+
+- [x] 21. Local-First Storage Migration
+  - [x] 21.1 Add Hive database (hive, hive_flutter)
+  - [x] 21.2 Create LocalDatabaseService
+  - [x] 21.3 Create LocalReceiptRepository
+  - [x] 21.4 Update providers to use local repository
+  - [x] 21.5 Simplify main.dart (remove Firebase auth requirement)
+
+- [x] 22. Premium UI Screens
+  - [x] 22.1 Receipt Details Screen (purchase info, goods list, category colors)
+  - [x] 22.2 Statistics Screen (fl_chart bar charts, category breakdown)
+  - [x] 22.3 Bookmarks Screen (sort dropdown, month grouping)
+  - [x] 22.4 Dashboard Redesign (Finances Overview, tabs, receipt list)
+  - [x] 22.5 Category Analysis Screen (pie chart, progress bars)
+
+- [x] 23. Settings & Localization
+  - [x] 23.1 Theme toggle (Light/Dark mode with Riverpod)
+  - [x] 23.2 Clear All Data (delete from Hive)
+  - [x] 23.3 English-only (remove Language option)
+  - [x] 23.4 Replace all de_DE locale with en_US
+
+- [x] 24. Navigation & Polish
+  - [x] 24.1 Bottom navigation (Dashboard, Archive, Camera, Settings)
+  - [x] 24.2 Auto-refresh Archive after save (ValueKey counter)
+  - [x] 24.3 Receipt tap opens Detail Screen
+
 ## Notes
 
 - All tasks including property-based tests are required for comprehensive coverage
@@ -444,4 +471,6 @@ This implementation plan breaks down the SparFuchs AI receipt scanning app into 
 - Property tests validate universal correctness properties from the design document
 - Unit tests validate specific examples and edge cases
 - **Copilot Prompts** are one-line instructions for Github Copilot code generation
-- AI model can be switched between Gemini 3 Flash and GPT-4o in n8n workflow configuration
+- AI model: Gemini 2.5 Flash (direct API call from Flutter)
+- Storage: Local-first with Hive (no cloud required)
+
