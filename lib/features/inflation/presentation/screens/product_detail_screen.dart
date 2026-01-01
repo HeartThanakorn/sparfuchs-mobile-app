@@ -22,11 +22,11 @@ class ProductDetailScreen extends StatefulWidget {
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   static final _currencyFormat = NumberFormat.currency(
-    locale: 'de_DE',
+    locale: 'en_US',
     symbol: '€',
   );
   
-  static final _dateFormat = DateFormat('dd.MM', 'de_DE');
+  static final _dateFormat = DateFormat('dd.MM', 'en_US');
 
   // TODO: Replace with real data
   final List<_PricePoint> _priceHistory = [

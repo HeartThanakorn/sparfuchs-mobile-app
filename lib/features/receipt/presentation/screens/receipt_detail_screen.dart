@@ -21,10 +21,10 @@ class ReceiptDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _ReceiptDetailScreenState extends ConsumerState<ReceiptDetailScreen> {
-  static final _dateFormat = DateFormat('dd.MM.yyyy', 'de_DE');
+  static final _dateFormat = DateFormat('dd.MM.yyyy', 'en_US');
   static final _timeFormat = DateFormat('HH:mm');
   static final _currencyFormat = NumberFormat.currency(
-    locale: 'de_DE',
+    locale: 'en_US',
     symbol: '€',
     decimalDigits: 2,
   );

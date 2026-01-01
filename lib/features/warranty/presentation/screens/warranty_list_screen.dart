@@ -116,7 +116,7 @@ class _WarrantyItemTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dateFormat = DateFormat('dd.MM.yyyy', 'de_DE');
+    final dateFormat = DateFormat('dd.MM.yyyy', 'en_US');
 
     return Dismissible(
       key: Key(item.warrantyId),

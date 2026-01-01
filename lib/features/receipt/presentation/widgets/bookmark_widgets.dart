@@ -89,9 +89,9 @@ class BookmarksView extends ConsumerStatefulWidget {
 }
 
 class _BookmarksViewState extends ConsumerState<BookmarksView> {
-  static final _dateFormat = DateFormat('dd.MM.yyyy', 'de_DE');
+  static final _dateFormat = DateFormat('dd.MM.yyyy', 'en_US');
   static final _currencyFormat = NumberFormat.currency(
-    locale: 'de_DE',
+    locale: 'en_US',
     symbol: '€',
     decimalDigits: 2,
   );

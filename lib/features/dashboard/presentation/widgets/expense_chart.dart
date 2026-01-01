@@ -98,13 +98,13 @@ class ExpenseChart extends StatelessWidget {
                     getTooltipItem: (group, groupIndex, rod, rodIndex) {
                       final monthData = data[groupIndex];
                       return BarTooltipItem(
-                        '${DateFormat('MMM', 'de_DE').format(monthData.month)}\n',
+                        '${DateFormat('MMM', 'en_US').format(monthData.month)}\n',
                         const TextStyle(
                             color: Colors.white, fontWeight: FontWeight.bold),
                         children: [
                           TextSpan(
                             text:
-                                NumberFormat.currency(locale: 'de_DE', symbol: '€').format(monthData.total),
+                                NumberFormat.currency(locale: 'en_US', symbol: '€').format(monthData.total),
                             style: const TextStyle(
                               color: Colors.white70,
                               fontWeight: FontWeight.normal,
@@ -150,7 +150,7 @@ class ExpenseChart extends StatelessWidget {
                         return Padding(
                           padding: const EdgeInsets.only(top: 8),
                           child: Text(
-                            DateFormat('MMM', 'de_DE').format(month),
+                            DateFormat('MMM', 'en_US').format(month),
                             style: const TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w500,

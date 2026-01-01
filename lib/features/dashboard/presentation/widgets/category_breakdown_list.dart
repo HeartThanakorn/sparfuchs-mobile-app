@@ -32,7 +32,7 @@ class CategoryBreakdownList extends StatelessWidget {
 
   /// German currency formatter
   static final _currencyFormat = NumberFormat.currency(
-    locale: 'de_DE',
+    locale: 'en_US',
     symbol: '€',
     decimalDigits: 2,
   );

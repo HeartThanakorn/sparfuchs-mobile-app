@@ -20,7 +20,7 @@ class _StatisticsScreenState extends ConsumerState<StatisticsScreen> {
   final List<String> _periods = ['Days', 'Weeks', 'Months'];
 
   static final _currencyFormat = NumberFormat.currency(
-    locale: 'de_DE',
+    locale: 'en_US',
     symbol: '€',
     decimalDigits: 2,
   );
@@ -78,7 +78,7 @@ class _StatisticsScreenState extends ConsumerState<StatisticsScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    DateFormat('dd.MM.yyyy', 'de_DE').format(DateTime.now()),
+                    DateFormat('dd.MM.yyyy', 'en_US').format(DateTime.now()),
                     style: const TextStyle(
                       fontSize: 16,
                       color: Color(AppColors.darkNavy),

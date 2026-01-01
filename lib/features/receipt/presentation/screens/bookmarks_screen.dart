@@ -18,10 +18,10 @@ class _BookmarksScreenState extends ConsumerState<BookmarksScreen> {
   String _sortOption = 'Newest first';
   final List<String> _sortOptions = ['Newest first', 'Oldest first', 'Highest amount', 'Lowest amount'];
 
-  static final _dateFormat = DateFormat('dd.MM.yy', 'de_DE');
+  static final _dateFormat = DateFormat('dd.MM.yy', 'en_US');
   static final _timeFormat = DateFormat('HH:mm');
   static final _currencyFormat = NumberFormat.currency(
-    locale: 'de_DE',
+    locale: 'en_US',
     symbol: '€',
     decimalDigits: 2,
   );
@@ -274,7 +274,7 @@ class _BookmarksScreenState extends ConsumerState<BookmarksScreen> {
 
   Map<String, List<Receipt>> _groupByMonth(List<Receipt> receipts) {
     final Map<String, List<Receipt>> grouped = {};
-    final monthFormat = DateFormat('MMMM yyyy', 'de_DE');
+    final monthFormat = DateFormat('MMMM yyyy', 'en_US');
     
     for (final receipt in receipts) {
       DateTime? date;

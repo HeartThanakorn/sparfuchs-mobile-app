@@ -32,7 +32,7 @@ class _EditLineItemDialogState extends State<EditLineItemDialog> {
 
   /// German currency format for display
   static final _germanCurrencyFormat = NumberFormat.currency(
-    locale: 'de_DE',
+    locale: 'en_US',
     symbol: '€',
     decimalDigits: 2,
   );

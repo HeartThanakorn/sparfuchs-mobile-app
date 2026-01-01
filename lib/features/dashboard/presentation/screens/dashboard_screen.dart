@@ -25,15 +25,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   /// German currency format
   static final _germanCurrencyFormat = NumberFormat.currency(
-    locale: 'de_DE',
+    locale: 'en_US',
     symbol: '€',
     decimalDigits: 2,
   );
 
   /// German date formats
-  String get _dayFormat => DateFormat('EEEE, d. MMMM yyyy', 'de_DE').format(_currentDate);
+  String get _dayFormat => DateFormat('EEEE, d. MMMM yyyy', 'en_US').format(_currentDate);
   String get _weekFormat => 'KW ${_getWeekNumber(_currentDate)}, ${_currentDate.year}';
-  String get _monthFormat => DateFormat('MMMM yyyy', 'de_DE').format(_currentDate);
+  String get _monthFormat => DateFormat('MMMM yyyy', 'en_US').format(_currentDate);
 
   int _getWeekNumber(DateTime date) {
     final firstDayOfYear = DateTime(date.year, 1, 1);
@@ -323,7 +323,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           Icon(Icons.receipt_long, size: 64, color: Colors.grey.shade300),
           const SizedBox(height: 16),
           Text(
-            'Deine Ausgaben werden hier angezeigt',
+            'Your expenses will be displayed here',
             style: TextStyle(color: Colors.grey.shade500),
           ),
         ],
@@ -353,7 +353,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     } catch (_) {}
 
     final dateStr = date != null 
-        ? DateFormat('dd.MM.yy', 'de_DE').format(date)
+        ? DateFormat('dd.MM.yy', 'en_US').format(date)
         : receipt.receiptData.transaction.date;
     final timeStr = time != null 
         ? DateFormat('HH:mm').format(time)

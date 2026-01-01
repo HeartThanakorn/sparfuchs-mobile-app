@@ -6,6 +6,7 @@ import 'package:sparfuchs_ai/core/services/local_database_service.dart';
 import 'package:sparfuchs_ai/shared/navigation/main_navigation_screen.dart';
 import 'package:sparfuchs_ai/firebase_options.dart';
 import 'package:sparfuchs_ai/core/config/api_key_config.dart';
+import 'package:sparfuchs_ai/features/settings/presentation/screens/settings_screen.dart';
 import 'shared/theme/app_theme.dart';
 
 void main() async {
@@ -17,8 +18,8 @@ void main() async {
   // Initialize Local Database (Hive)
   await LocalDatabaseService.initialize();
 
-  // Initialize locale data for DateFormat
-  await initializeDateFormatting('de_DE', null);
+  // Initialize locale data for DateFormat (English)
+  await initializeDateFormatting('en_US', null);
 
   // Initialize Firebase (minimal - for potential analytics, optional)
   try {
@@ -37,17 +38,19 @@ void main() async {
 }
 
 /// SparFuchs AI - Smart Receipt Scanner & Expense Tracker
-class SparFuchsApp extends StatelessWidget {
+class SparFuchsApp extends ConsumerWidget {
   const SparFuchsApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeModeProvider);
+    
     return MaterialApp(
       title: 'SparFuchs AI',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.light,
+      themeMode: themeMode,
       home: const MainNavigationScreen(),
     );
   }

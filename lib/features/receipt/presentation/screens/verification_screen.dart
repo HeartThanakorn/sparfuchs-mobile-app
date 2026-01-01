@@ -323,7 +323,7 @@ class _PurchaseInfoCard extends StatelessWidget {
     String formattedDate = transaction.date;
     try {
       final date = DateTime.parse(transaction.date);
-      formattedDate = DateFormat('dd.MM.yyyy', 'de_DE').format(date);
+      formattedDate = DateFormat('dd.MM.yyyy', 'en_US').format(date);
     } catch (_) {}
 
     return Card(
@@ -632,7 +632,7 @@ class _SummaryCard extends StatelessWidget {
   const _SummaryCard({required this.totals});
 
   static final _germanCurrencyFormat = NumberFormat.currency(
-    locale: 'de_DE',
+    locale: 'en_US',
     symbol: '€',
     decimalDigits: 2,
   );

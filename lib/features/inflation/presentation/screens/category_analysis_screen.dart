@@ -16,7 +16,7 @@ class CategoryAnalysisScreen extends ConsumerStatefulWidget {
 
 class _CategoryAnalysisScreenState extends ConsumerState<CategoryAnalysisScreen> {
   static final _currencyFormat = NumberFormat.currency(
-    locale: 'de_DE',
+    locale: 'en_US',
     symbol: '€',
     decimalDigits: 2,
   );

@@ -4,32 +4,32 @@ import 'package:intl/intl.dart';
 /// Helper class for German-specific formatting
 class GermanFormat {
   /// German date format: DD.MM.YYYY
-  static final DateFormat date = DateFormat('dd.MM.yyyy', 'de_DE');
+  static final DateFormat date = DateFormat('dd.MM.yyyy', 'en_US');
 
   /// German date with time: DD.MM.YYYY HH:mm
-  static final DateFormat dateTime = DateFormat('dd.MM.yyyy HH:mm', 'de_DE');
+  static final DateFormat dateTime = DateFormat('dd.MM.yyyy HH:mm', 'en_US');
 
   /// Short date: DD.MM.
-  static final DateFormat shortDate = DateFormat('dd.MM.', 'de_DE');
+  static final DateFormat shortDate = DateFormat('dd.MM.', 'en_US');
 
   /// Month and year: MMMM yyyy
-  static final DateFormat monthYear = DateFormat('MMMM yyyy', 'de_DE');
+  static final DateFormat monthYear = DateFormat('MMMM yyyy', 'en_US');
 
   /// Day name: Montag, Dienstag, etc.
-  static final DateFormat dayName = DateFormat('EEEE', 'de_DE');
+  static final DateFormat dayName = DateFormat('EEEE', 'en_US');
 
   /// German currency format: 1.234,56 €
   static final NumberFormat currency = NumberFormat.currency(
-    locale: 'de_DE',
+    locale: 'en_US',
     symbol: '€',
     decimalDigits: 2,
   );
 
   /// German number format: 1.234,56
-  static final NumberFormat number = NumberFormat.decimalPattern('de_DE');
+  static final NumberFormat number = NumberFormat.decimalPattern('en_US');
 
   /// German percentage: 19,00 %
-  static final NumberFormat percent = NumberFormat.percentPattern('de_DE');
+  static final NumberFormat percent = NumberFormat.percentPattern('en_US');
 
   /// Format a price value
   static String formatPrice(double value) => currency.format(value);

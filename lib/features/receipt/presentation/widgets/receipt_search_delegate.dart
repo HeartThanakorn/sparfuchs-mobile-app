@@ -12,9 +12,9 @@ class ReceiptSearchDelegate extends SearchDelegate<Receipt?> {
   DateTimeRange? _dateRange;
 
   /// German formatters
-  static final _dateFormat = DateFormat('dd.MM.yyyy', 'de_DE');
+  static final _dateFormat = DateFormat('dd.MM.yyyy', 'en_US');
   static final _currencyFormat = NumberFormat.currency(
-    locale: 'de_DE',
+    locale: 'en_US',
     symbol: '€',
     decimalDigits: 2,
   );

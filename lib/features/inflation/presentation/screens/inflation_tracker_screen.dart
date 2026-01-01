@@ -104,7 +104,7 @@ class _InflationTrackerScreenState
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
               child: Text(
-                'Deine Produkte',
+                'Your Products',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -156,7 +156,7 @@ class _TrendingProductCard extends StatelessWidget {
   const _TrendingProductCard({required this.product});
 
   static final _currencyFormat = NumberFormat.currency(
-    locale: 'de_DE',
+    locale: 'en_US',
     symbol: '€',
   );
 
@@ -249,7 +249,7 @@ class _TrackedProductTile extends StatelessWidget {
   const _TrackedProductTile({required this.product});
 
   static final _currencyFormat = NumberFormat.currency(
-    locale: 'de_DE',
+    locale: 'en_US',
     symbol: '€',
   );
 

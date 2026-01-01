@@ -19,9 +19,9 @@ class ReceiptArchiveScreen extends ConsumerStatefulWidget {
 }
 
 class _ReceiptArchiveScreenState extends ConsumerState<ReceiptArchiveScreen> {
-  static final _dateFormat = DateFormat('dd.MM.yyyy', 'de_DE');
+  static final _dateFormat = DateFormat('dd.MM.yyyy', 'en_US');
   static final _currencyFormat = NumberFormat.currency(
-    locale: 'de_DE',
+    locale: 'en_US',
     symbol: '€',
     decimalDigits: 2,
   );
@@ -185,7 +185,7 @@ class _ReceiptArchiveScreenState extends ConsumerState<ReceiptArchiveScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Noch keine Belege',
+            'No receipts yet',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   color: const Color(AppColors.neutralGray),
                 ),

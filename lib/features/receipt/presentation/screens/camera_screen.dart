@@ -354,7 +354,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
           children: [
             CircularProgressIndicator(color: Colors.white),
             SizedBox(height: 16),
-            Text('KI analysiert Beleg...',
+            Text('AI analyzing receipt...',
                 style: TextStyle(
                     color: Colors.white,
                     fontSize: 16,
