@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:sparfuchs_ai/core/constants/app_constants.dart';
 import 'package:sparfuchs_ai/core/models/receipt.dart';
 import 'package:sparfuchs_ai/core/services/local_database_service.dart';
+import 'package:sparfuchs_ai/features/inflation/presentation/screens/category_analysis_screen.dart';
 
 /// Statistics Screen - Simplified with functional elements only
 class StatisticsScreen extends ConsumerStatefulWidget {
@@ -172,6 +173,20 @@ class _StatisticsScreenState extends ConsumerState<StatisticsScreen> {
             ),
           ),
           borderData: FlBorderData(show: false),
+          barTouchData: BarTouchData(
+            enabled: true,
+            touchTooltipData: BarTouchTooltipData(
+              getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                return BarTooltipItem(
+                  _currencyFormat.format(rod.toY),
+                  const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                );
+              },
+          ),
         ),
       ),
     );
@@ -235,55 +250,68 @@ class _StatisticsScreenState extends ConsumerState<StatisticsScreen> {
             : 0;
         final color = _categoryColors[entry.key] ?? Colors.grey;
 
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Container(
-                  width: 4,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: color,
-                    borderRadius: BorderRadius.circular(2),
+        return InkWell(
+          onTap: () => _navigateToPieChart(context),
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Container(
+                    width: 4,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: color,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  '$percentage%',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: color,
+                  const SizedBox(width: 12),
+                  Text(
+                    '$percentage%',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: color,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    entry.key,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      entry.key,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w500,
+                        color: Color(AppColors.darkNavy),
+                      ),
+                    ),
+                  ),
+                  Text(
+                    _currencyFormat.format(entry.value),
                     style: const TextStyle(
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w600,
                       color: Color(AppColors.darkNavy),
                     ),
                   ),
-                ),
-                Text(
-                  _currencyFormat.format(entry.value),
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: Color(AppColors.darkNavy),
-                  ),
-                ),
-              ],
+                  const SizedBox(width: 8),
+                  const Icon(Icons.chevron_right, color: Color(AppColors.neutralGray)),
+                ],
+              ),
             ),
           ),
         );
       }).toList(),
+    );
+  }
+
+  void _navigateToPieChart(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const CategoryAnalysisScreen()),
     );
   }
 
