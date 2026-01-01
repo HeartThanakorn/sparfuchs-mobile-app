@@ -11,12 +11,12 @@ A smart receipt scanning and expense tracking app. Built with Flutter and powere
 | 📸 **AI Receipt Scanning** | Gemini 2.5 Flash extracts items, prices, totals, categories |
 | 🧾 **Receipt Details** | Premium UI with purchase info, goods list, category colors |
 | 📊 **Statistics** | Stacked bar charts, category breakdown with percentages |
-| 🔖 **Bookmarks** | Save favorite receipts, sort & filter by date |
-| 🏠 **Dashboard** | Finances overview with tabs, balance, receipt list |
-| 📈 **Category Analysis** | Pie charts showing spending breakdown |
-| 🌓 **Dark Mode** | Toggle light/dark theme in Settings |
+| 🥧 **Category Analysis** | Pie charts showing spending breakdown by category |
+| 🔖 **Bookmarks** | Save favorite receipts, filter in Archive |
+| 🏠 **Dashboard** | Monthly spending summary, recent receipts list |
+| 🗂️ **Archive Filter** | Filter by bookmarks only and date range picker |
 | 🗑️ **Clear Data** | Delete all receipts from Settings |
-| 💾 **Local Storage** | Hive database (no cloud required) |
+| 💾 **Local Storage** | Hive database (no cloud required, offline-first) |
 
 ### 🔜 Planned
 
@@ -24,6 +24,7 @@ A smart receipt scanning and expense tracking app. Built with Flutter and powere
 - Inflation tracker (price history)
 - Recipe suggestions
 - Warranty reminders
+- Dark Mode theme
 
 ## Tech Stack
 
@@ -50,9 +51,9 @@ No backend server required. All data stored locally on device.
 lib/
   core/           # Models, constants, services
   features/
-    dashboard/    # Finances overview, statistics
+    dashboard/    # Monthly summary, statistics
     receipt/      # Scanning, archive, details, bookmarks
-    settings/     # Theme, clear data
+    settings/     # Data management
     inflation/    # Category analysis
   shared/         # Navigation, theme
 ```
@@ -89,9 +90,9 @@ APK location: `build/app/outputs/flutter-apk/app-release.apk`
 
 ## Screenshots
 
-| Dashboard | Receipt Details | Statistics |
-|-----------|-----------------|------------|
-| Finances Overview with tabs | Purchase info & items | Bar charts & categories |
+| Dashboard | Archive | Statistics |
+|-----------|---------|------------|
+| Monthly summary & receipts | Filter by date & bookmarks | Bar charts & categories |
 
 ## Testing
 
@@ -107,4 +108,4 @@ flutter test
 
 ## License
 
-Copyright 2025 Thanakorn Thajan. All rights reserved.
+Copyright 2025-2026 Thanakorn Thajan. All rights reserved.
