@@ -3,18 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sparfuchs_ai/core/constants/app_constants.dart';
 import 'package:sparfuchs_ai/core/services/local_database_service.dart';
 
-/// Theme mode provider
-final themeModeProvider = StateProvider<ThemeMode>((ref) => ThemeMode.light);
-
 /// Settings screen - SIMPLIFIED with only working features
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final themeMode = ref.watch(themeModeProvider);
-    final isDarkMode = themeMode == ThemeMode.dark;
-
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
@@ -27,31 +21,6 @@ class SettingsScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Theme Section
-          _buildSectionTitle('APPEARANCE'),
-          Card(
-            elevation: 0,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            child: ListTile(
-              leading: Icon(
-                isDarkMode ? Icons.dark_mode : Icons.light_mode,
-                color: const Color(AppColors.primaryTeal),
-              ),
-              title: const Text('Theme', style: TextStyle(fontWeight: FontWeight.w500)),
-              subtitle: Text(isDarkMode ? 'Dark' : 'Light'),
-              trailing: Switch(
-                value: isDarkMode,
-                onChanged: (value) {
-                  ref.read(themeModeProvider.notifier).state = 
-                      value ? ThemeMode.dark : ThemeMode.light;
-                },
-                activeColor: const Color(AppColors.primaryTeal),
-              ),
-            ),
-          ),
-          
-          const SizedBox(height: 24),
-          
           // Data Section
           _buildSectionTitle('DATA'),
           Card(
@@ -59,12 +28,11 @@ class SettingsScreen extends ConsumerWidget {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             child: Column(
               children: [
-                // Data Size (info only, no arrow)
+                // Data Size (info only)
                 ListTile(
                   leading: const Icon(Icons.storage_outlined, color: Color(AppColors.primaryTeal)),
                   title: const Text('Data Size', style: TextStyle(fontWeight: FontWeight.w500)),
                   subtitle: Text(_getDataSize()),
-                  // No trailing = no arrow
                 ),
                 const Divider(height: 1),
                 // Clear All Data (has action)
@@ -76,7 +44,6 @@ class SettingsScreen extends ConsumerWidget {
                   ),
                   subtitle: Text('Delete all receipts permanently', style: TextStyle(color: Colors.grey.shade600)),
                   onTap: () => _showClearDataDialog(context, ref),
-                  // No arrow - action is in onTap
                 ),
               ],
             ),

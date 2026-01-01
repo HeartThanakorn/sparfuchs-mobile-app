@@ -6,7 +6,6 @@ import 'package:sparfuchs_ai/core/services/local_database_service.dart';
 import 'package:sparfuchs_ai/shared/navigation/main_navigation_screen.dart';
 import 'package:sparfuchs_ai/firebase_options.dart';
 import 'package:sparfuchs_ai/core/config/api_key_config.dart';
-import 'package:sparfuchs_ai/features/settings/presentation/screens/settings_screen.dart';
 import 'shared/theme/app_theme.dart';
 
 void main() async {
@@ -38,19 +37,15 @@ void main() async {
 }
 
 /// SparFuchs AI - Smart Receipt Scanner & Expense Tracker
-class SparFuchsApp extends ConsumerWidget {
+class SparFuchsApp extends StatelessWidget {
   const SparFuchsApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final themeMode = ref.watch(themeModeProvider);
-    
+  Widget build(BuildContext context) {
     return MaterialApp(
       title: 'SparFuchs AI',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: themeMode,
       home: const MainNavigationScreen(),
     );
   }
