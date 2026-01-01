@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:sparfuchs_ai/core/constants/app_constants.dart';
 import 'package:sparfuchs_ai/core/models/receipt.dart';
 import 'package:sparfuchs_ai/core/services/local_database_service.dart';
+import 'package:sparfuchs_ai/features/inflation/presentation/screens/category_analysis_screen.dart';
 
 /// Statistics Screen with charts and category breakdown
 class StatisticsScreen extends ConsumerStatefulWidget {
@@ -445,9 +446,9 @@ class _StatisticsScreenState extends ConsumerState<StatisticsScreen> {
   }
 
   void _onCategoryTap(String category) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Category: $category')),
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const CategoryAnalysisScreen()),
     );
-    // TODO: Navigate to category detail view
   }
 }

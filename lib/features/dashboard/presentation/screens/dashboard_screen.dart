@@ -6,6 +6,7 @@ import 'package:sparfuchs_ai/core/models/receipt.dart';
 import 'package:sparfuchs_ai/features/receipt/data/providers/receipt_providers.dart';
 import 'package:sparfuchs_ai/features/receipt/presentation/screens/camera_screen.dart';
 import 'package:sparfuchs_ai/features/dashboard/presentation/screens/statistics_screen.dart';
+import 'package:sparfuchs_ai/features/receipt/presentation/screens/receipt_detail_screen.dart';
 
 /// Time period options for dashboard filtering
 enum TimePeriod { days, weeks, months }
@@ -104,10 +105,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final receiptsAsync = ref.watch(receiptsStreamProvider);
 
     return Scaffold(
+      backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        title: const Text('Dashboard'),
+        title: const Text('Finances Overview'),
         centerTitle: true,
+        backgroundColor: Colors.white,
+        foregroundColor: const Color(AppColors.darkNavy),
+        elevation: 0,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () {
+              // TODO: Implement search
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.bar_chart),
             tooltip: 'Statistics',
@@ -122,80 +133,331 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       ),
       body: Column(
         children: [
-          // Time Period Toggle
-          _TimePeriodToggle(
-            selectedPeriod: _selectedPeriod,
-            onPeriodChanged: (period) {
-              setState(() {
-                _selectedPeriod = period;
-                // Reset to current date when switching periods
-                _currentDate = DateTime.now();
-              });
-            },
+          // Filter Tabs (All, Expenses, Income, Submitted)
+          Container(
+            color: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: _buildFilterTabs(),
           ),
-
-          // Date Navigator
-          _DateNavigator(
-            periodLabel: _periodLabel,
-            onPrevious: () => _navigatePeriod(-1),
-            onNext: () => _navigatePeriod(1),
-          ),
-
-          // Total Spending Card
-          receiptsAsync.when(
-            loading: () => const _LoadingSpendingCard(),
-            error: (err, stack) => _ErrorSpendingCard(error: err.toString()),
-            data: (receipts) {
-              final total = _calculateTotalSpending(receipts);
-              return _TotalSpendingCard(
-                amount: total,
-                formattedAmount: _germanCurrencyFormat.format(total),
-                periodLabel: _getPeriodTypeLabel(),
-              );
-            },
-          ),
-
-          // Placeholder for more content
-          Expanded(
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.receipt_long,
-                    size: 64,
-                    color: const Color(AppColors.neutralGray).withValues(alpha: 0.5),
+          
+          // Toggle: Show only expenses not in statistics
+          Container(
+            color: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Show only expenses that are not\nyet in the statistics.',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey.shade600,
+                    ),
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Deine Ausgaben werden hier angezeigt',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: const Color(AppColors.neutralGray),
+                ),
+                Switch(
+                  value: false,
+                  onChanged: (_) {},
+                  activeColor: const Color(AppColors.primaryTeal),
+                ),
+              ],
+            ),
+          ),
+          
+          const SizedBox(height: 8),
+          
+          // Month Header + Balance
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'This month',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Color(AppColors.darkNavy),
+                  ),
+                ),
+                Row(
+                  children: [
+                    IconButton(
+                      icon: Icon(Icons.calendar_today, size: 20, color: Colors.grey.shade600),
+                      onPressed: () {},
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.filter_alt_outlined, size: 20, color: Colors.grey.shade600),
+                      onPressed: () {},
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          
+          // Balance Row
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: receiptsAsync.when(
+              loading: () => const SizedBox(height: 30),
+              error: (_, __) => const Text('Error'),
+              data: (receipts) {
+                final total = _calculateTotalSpending(receipts);
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Balance',
+                      style: TextStyle(fontSize: 15, color: Color(AppColors.darkNavy)),
+                    ),
+                    Row(
+                      children: [
+                        Text(
+                          _germanCurrencyFormat.format(total),
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Color(AppColors.darkNavy),
+                          ),
                         ),
-                  ),
-                ],
-              ),
+                        const SizedBox(width: 4),
+                        Icon(Icons.info_outline, size: 18, color: Colors.grey.shade400),
+                      ],
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // Receipt List
+          Expanded(
+            child: receiptsAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, _) => Center(child: Text('Error: $err')),
+              data: (receipts) {
+                if (receipts.isEmpty) {
+                  return _buildEmptyState();
+                }
+                return _buildReceiptList(receipts);
+              },
             ),
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.large(
+      floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          final result = await Navigator.push(
+          await Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const CameraScreen()),
           );
-           if (result != null && context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Bild erfolgreich aufgenommen! 📸'),
-              ),
-            );
-          }
         },
-        child: const Icon(Icons.camera_alt, size: 32),
+        backgroundColor: const Color(AppColors.primaryTeal),
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
+  }
+
+  int _selectedTabIndex = 0;
+
+  Widget _buildFilterTabs() {
+    final tabs = ['All', 'Expenses', 'Income', 'Submitted'];
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Row(
+        children: List.generate(tabs.length, (index) {
+          final isSelected = index == _selectedTabIndex;
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: FilterChip(
+              label: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(tabs[index]),
+                  if (index == 3) ...[
+                    const SizedBox(width: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(AppColors.primaryTeal),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Text(
+                        '2',
+                        style: TextStyle(color: Colors.white, fontSize: 11),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              selected: isSelected,
+              onSelected: (selected) {
+                setState(() => _selectedTabIndex = index);
+              },
+              selectedColor: const Color(AppColors.darkNavy),
+              labelStyle: TextStyle(
+                color: isSelected ? Colors.white : const Color(AppColors.darkNavy),
+                fontWeight: FontWeight.w500,
+              ),
+              backgroundColor: Colors.grey.shade100,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              side: BorderSide.none,
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.receipt_long, size: 64, color: Colors.grey.shade300),
+          const SizedBox(height: 16),
+          Text(
+            'Deine Ausgaben werden hier angezeigt',
+            style: TextStyle(color: Colors.grey.shade500),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReceiptList(List<Receipt> receipts) {
+    // Sort by date descending
+    final sorted = List<Receipt>.from(receipts)
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      itemCount: sorted.length,
+      itemBuilder: (context, index) => _buildReceiptCard(sorted[index]),
+    );
+  }
+
+  Widget _buildReceiptCard(Receipt receipt) {
+    DateTime? date;
+    DateTime? time;
+    
+    try {
+      date = DateFormat('yyyy-MM-dd').parse(receipt.receiptData.transaction.date);
+      time = DateFormat('HH:mm:ss').parse(receipt.receiptData.transaction.time);
+    } catch (_) {}
+
+    final dateStr = date != null 
+        ? DateFormat('dd.MM.yy', 'de_DE').format(date)
+        : receipt.receiptData.transaction.date;
+    final timeStr = time != null 
+        ? DateFormat('HH:mm').format(time)
+        : receipt.receiptData.transaction.time.substring(0, 5);
+
+    return Card(
+      elevation: 0,
+      margin: const EdgeInsets.only(bottom: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        leading: Stack(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: const Color(AppColors.lightMint),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Center(
+                child: Text(
+                  receipt.receiptData.merchant.name.isNotEmpty
+                      ? receipt.receiptData.merchant.name[0].toUpperCase()
+                      : 'M',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(AppColors.primaryTeal),
+                  ),
+                ),
+              ),
+            ),
+            // User avatar overlay (placeholder for household)
+            Positioned(
+              bottom: -4,
+              right: -4,
+              child: Container(
+                width: 20,
+                height: 20,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2),
+                ),
+                child: const Icon(Icons.person, size: 12, color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+        title: Row(
+          children: [
+            Icon(
+              receipt.isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+              size: 16,
+              color: receipt.isBookmarked 
+                  ? const Color(AppColors.darkNavy)
+                  : Colors.grey.shade400,
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                receipt.receiptData.merchant.name,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: Color(AppColors.darkNavy),
+                ),
+              ),
+            ),
+          ],
+        ),
+        subtitle: Text(
+          '$dateStr • $timeStr',
+          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              _germanCurrencyFormat.format(receipt.receiptData.totals.grandTotal),
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Color(AppColors.darkNavy),
+              ),
+            ),
+            const SizedBox(width: 4),
+            const Icon(Icons.chevron_right, color: Color(AppColors.neutralGray)),
+          ],
+        ),
+        onTap: () => _openReceiptDetail(receipt),
+      ),
+    );
+  }
+
+  void _openReceiptDetail(Receipt receipt) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ReceiptDetailScreen(receipt: receipt),
+      ),
+    );
+    // Refresh after return
+    if (mounted) setState(() {});
   }
 
   String _getPeriodTypeLabel() {
