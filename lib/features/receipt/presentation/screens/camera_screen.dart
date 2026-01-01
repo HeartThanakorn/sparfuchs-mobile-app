@@ -1,7 +1,7 @@
-import 'dart:io';
+
 
 import 'package:camera/camera.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sparfuchs_ai/core/models/receipt.dart';
@@ -83,7 +83,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
       final receiptData = await scanRepo.scanReceipt(file);
 
       // Create a temporary Receipt object for verification
-      final userId = FirebaseAuth.instance.currentUser?.uid ?? 'temp_user';
+      const userId = 'local_user';
       final tempReceipt = Receipt(
         receiptId: 'new_receipt', // Marker for new receipt
         userId: userId,
@@ -131,7 +131,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
           final scanRepo = ref.read(scanRepositoryProvider);
           final receiptData = await scanRepo.scanReceipt(file);
 
-          final userId = FirebaseAuth.instance.currentUser?.uid ?? 'temp_user';
+          const userId = 'local_user';
           final tempReceipt = Receipt(
             receiptId: 'new_receipt',
             userId: userId,

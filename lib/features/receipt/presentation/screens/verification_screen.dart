@@ -7,7 +7,6 @@ import 'package:sparfuchs_ai/core/constants/app_constants.dart';
 import 'package:sparfuchs_ai/core/models/receipt.dart';
 import 'package:sparfuchs_ai/features/receipt/data/providers/receipt_providers.dart';
 import 'package:sparfuchs_ai/features/receipt/presentation/widgets/edit_line_item_dialog.dart';
-import 'package:sparfuchs_ai/features/inflation/data/providers/product_providers.dart';
 
 /// Screen for verifying and reviewing a scanned receipt
 class VerificationScreen extends ConsumerStatefulWidget {
@@ -101,7 +100,7 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
         }
 
         // 2. Save Receipt
-        final receiptId = await repository.saveReceipt(
+        await repository.saveReceipt(
           receiptData: updatedReceipt.receiptData,
           imageUrl: imageUrl, 
           householdId: updatedReceipt.householdId,
@@ -109,6 +108,9 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
 
         // 3. Update Inflation Tracker (Fire & Forget)
         // We don't await this to keep UI responsive
+        // 3. Update Inflation Tracker (Fire & Forget)
+        // Feature disabled/removed
+        /*
         final productRepository = ref.read(productRepositoryProvider);
         for (final item in updatedReceipt.receiptData.items) {
           productRepository.addPricePoint(
@@ -120,6 +122,7 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
             debugPrint('Failed to track product price: $e');
           });
         }
+        */
 
       } else {
         // Update existing
