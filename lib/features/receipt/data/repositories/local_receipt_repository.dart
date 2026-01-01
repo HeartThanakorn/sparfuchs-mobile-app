@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -85,7 +86,7 @@ class LocalReceiptRepository {
       'householdId': householdId,
       'imageUrl': imageUrl,
       'isBookmarked': false,
-      'receiptData': receiptData.toJson(),
+      'receiptData': jsonDecode(jsonEncode(receiptData.toJson())),
       'createdAt': now.toIso8601String(),
       'updatedAt': now.toIso8601String(),
     };
@@ -103,7 +104,7 @@ class LocalReceiptRepository {
     }
 
     final data = Map<String, dynamic>.from(existing);
-    data['receiptData'] = receiptData.toJson();
+    data['receiptData'] = jsonDecode(jsonEncode(receiptData.toJson()));
     data['updatedAt'] = DateTime.now().toIso8601String();
 
     await LocalDatabaseService.receiptsBox.put(receiptId, data);
