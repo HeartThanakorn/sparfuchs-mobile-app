@@ -6,7 +6,7 @@ import 'package:sparfuchs_ai/core/services/local_database_service.dart';
 /// Theme mode provider
 final themeModeProvider = StateProvider<ThemeMode>((ref) => ThemeMode.light);
 
-/// Settings screen with working features
+/// Settings screen - SIMPLIFIED with only working features
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
@@ -27,83 +27,108 @@ class SettingsScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // App Section
-          _SettingsSection(
-            title: 'APP',
-            children: [
-              _SettingsTile(
-                icon: isDarkMode ? Icons.dark_mode : Icons.light_mode,
-                title: 'Theme',
-                subtitle: isDarkMode ? 'Dark' : 'Light',
-                trailing: Switch(
-                  value: isDarkMode,
-                  onChanged: (value) {
-                    ref.read(themeModeProvider.notifier).state = 
-                        value ? ThemeMode.dark : ThemeMode.light;
-                  },
-                  activeColor: const Color(AppColors.primaryTeal),
-                ),
-                onTap: () {
-                  ref.read(themeModeProvider.notifier).state = 
-                      isDarkMode ? ThemeMode.light : ThemeMode.dark;
-                },
+          // Theme Section
+          _buildSectionTitle('APPEARANCE'),
+          Card(
+            elevation: 0,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: ListTile(
+              leading: Icon(
+                isDarkMode ? Icons.dark_mode : Icons.light_mode,
+                color: const Color(AppColors.primaryTeal),
               ),
-            ],
+              title: const Text('Theme', style: TextStyle(fontWeight: FontWeight.w500)),
+              subtitle: Text(isDarkMode ? 'Dark' : 'Light'),
+              trailing: Switch(
+                value: isDarkMode,
+                onChanged: (value) {
+                  ref.read(themeModeProvider.notifier).state = 
+                      value ? ThemeMode.dark : ThemeMode.light;
+                },
+                activeColor: const Color(AppColors.primaryTeal),
+              ),
+            ),
           ),
-          const SizedBox(height: 16),
+          
+          const SizedBox(height: 24),
           
           // Data Section
-          _SettingsSection(
-            title: 'DATA',
-            children: [
-              _SettingsTile(
-                icon: Icons.folder_outlined,
-                title: 'Storage',
-                subtitle: 'Local Device (Hive)',
-                onTap: () {},
-              ),
-              _SettingsTile(
-                icon: Icons.storage_outlined,
-                title: 'Data Size',
-                subtitle: _getDataSize(),
-                onTap: () {},
-              ),
-              _SettingsTile(
-                icon: Icons.delete_outline,
-                title: 'Clear All Data',
-                subtitle: 'Delete all receipts permanently',
-                onTap: () => _showClearDataDialog(context, ref),
-                isDestructive: true,
-              ),
-            ],
+          _buildSectionTitle('DATA'),
+          Card(
+            elevation: 0,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: Column(
+              children: [
+                // Data Size (info only, no arrow)
+                ListTile(
+                  leading: const Icon(Icons.storage_outlined, color: Color(AppColors.primaryTeal)),
+                  title: const Text('Data Size', style: TextStyle(fontWeight: FontWeight.w500)),
+                  subtitle: Text(_getDataSize()),
+                  // No trailing = no arrow
+                ),
+                const Divider(height: 1),
+                // Clear All Data (has action)
+                ListTile(
+                  leading: const Icon(Icons.delete_outline, color: Color(AppColors.errorRed)),
+                  title: const Text(
+                    'Clear All Data', 
+                    style: TextStyle(fontWeight: FontWeight.w500, color: Color(AppColors.errorRed)),
+                  ),
+                  subtitle: Text('Delete all receipts permanently', style: TextStyle(color: Colors.grey.shade600)),
+                  onTap: () => _showClearDataDialog(context, ref),
+                  // No arrow - action is in onTap
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 16),
           
-          // About Section
-          _SettingsSection(
-            title: 'ABOUT',
-            children: [
-              _SettingsTile(
-                icon: Icons.info_outline,
-                title: 'Version',
-                subtitle: '1.0.0',
-                onTap: () {},
-              ),
-              _SettingsTile(
-                icon: Icons.smart_toy_outlined,
-                title: 'AI Engine',
-                subtitle: 'Gemini 2.5 Flash',
-                onTap: () {},
-              ),
-              _SettingsTile(
-                icon: Icons.code,
-                title: 'Built with',
-                subtitle: 'Flutter & Riverpod',
-                onTap: () {},
-              ),
-            ],
+          const SizedBox(height: 24),
+          
+          // About Section - Info Only
+          _buildSectionTitle('ABOUT'),
+          Card(
+            elevation: 0,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: const Column(
+              children: [
+                ListTile(
+                  leading: Icon(Icons.info_outline, color: Color(AppColors.primaryTeal)),
+                  title: Text('Version', style: TextStyle(fontWeight: FontWeight.w500)),
+                  subtitle: Text('1.0.0'),
+                ),
+                Divider(height: 1),
+                ListTile(
+                  leading: Icon(Icons.smart_toy_outlined, color: Color(AppColors.primaryTeal)),
+                  title: Text('AI Engine', style: TextStyle(fontWeight: FontWeight.w500)),
+                  subtitle: Text('Gemini 2.5 Flash'),
+                ),
+                Divider(height: 1),
+                ListTile(
+                  leading: Icon(Icons.code, color: Color(AppColors.primaryTeal)),
+                  title: Text('Built with', style: TextStyle(fontWeight: FontWeight.w500)),
+                  subtitle: Text('Flutter & Riverpod'),
+                ),
+              ],
+            ),
           ),
+          
+          const SizedBox(height: 100),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 8),
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: Color(AppColors.neutralGray),
+          letterSpacing: 1,
+        ),
       ),
     );
   }
@@ -178,91 +203,5 @@ class SettingsScreen extends ConsumerWidget {
         );
       }
     }
-  }
-}
-
-class _SettingsSection extends StatelessWidget {
-  final String title;
-  final List<Widget> children;
-
-  const _SettingsSection({
-    required this.title,
-    required this.children,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 16, bottom: 8),
-          child: Text(
-            title,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: Color(AppColors.neutralGray),
-              letterSpacing: 1,
-            ),
-          ),
-        ),
-        Card(
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Column(children: children),
-        ),
-      ],
-    );
-  }
-}
-
-class _SettingsTile extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-  final Widget? trailing;
-  final bool isDestructive;
-
-  const _SettingsTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-    this.trailing,
-    this.isDestructive = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      leading: Icon(
-        icon,
-        color: isDestructive
-            ? const Color(AppColors.errorRed)
-            : const Color(AppColors.primaryTeal),
-      ),
-      title: Text(
-        title,
-        style: TextStyle(
-          fontWeight: FontWeight.w500,
-          color: isDestructive 
-              ? const Color(AppColors.errorRed) 
-              : const Color(AppColors.darkNavy),
-        ),
-      ),
-      subtitle: Text(
-        subtitle,
-        style: TextStyle(
-          color: Colors.grey.shade600,
-          fontSize: 13,
-        ),
-      ),
-      trailing: trailing ?? const Icon(Icons.chevron_right, color: Colors.grey),
-      onTap: onTap,
-    );
   }
 }
