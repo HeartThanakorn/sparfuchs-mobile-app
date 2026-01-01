@@ -2,7 +2,7 @@
 
 ## Introduction
 
-SparFuchs AI is a German receipt scanning and expense tracking mobile application targeting the DACH region. The app uses AI-powered multimodal scanning (Gemini 2.5 Flash) to extract structured data from German receipts, with special handling for German-specific elements like Pfand (bottle deposits), VAT rates (7%/19%), and common retailer formats (Aldi, Lidl, Rewe, DM). The app differentiates from competitors like "Bonsy Bon Scan" through killer features: Inflation Tracker, Smart Recipe Suggestions, and Warranty/Return Monitoring.
+SparFuchs AI is a smart receipt scanning and expense tracking mobile application. The app uses AI-powered multimodal scanning (Gemini 2.5 Flash) to extract structured data from German receipts, with special handling for German-specific elements like Pfand (bottle deposits), VAT rates (7%/19%), and common retailer formats (Aldi, Lidl, Rewe, DM). The app is built with a local-first philosophy, ensuring data privacy and offline capability.
 
 ## Glossary
 
@@ -11,12 +11,9 @@ SparFuchs AI is a German receipt scanning and expense tracking mobile applicatio
 - **Receipt_Parser**: The component that converts AI output into structured Receipt data
 - **Expense_Dashboard**: The analytics view showing spending charts and category breakdowns
 - **Receipt_Archive**: The searchable digital storage for receipt images and extracted data
-- **Household_Manager**: The component managing multi-user account sharing and sync
-- **Inflation_Tracker**: The feature tracking product price changes over time
-- **Recipe_Engine**: The AI component suggesting recipes based on purchased groceries
-- **Warranty_Monitor**: The component detecting electronics/clothing and setting return/warranty reminders
+- **Category_Analysis**: The feature analyzing spending distribution across categories
 - **Pfand**: German bottle deposit system (typically €0.25 per bottle)
-- **LineItem**: A single product entry on a receipt
+- **LinesItem**: A single product entry on a receipt
 - **Confidence_Score**: AI's certainty level (0.0-1.0) for parsed data accuracy
 
 ## Requirements
@@ -48,7 +45,7 @@ SparFuchs AI is a German receipt scanning and expense tracking mobile applicatio
 4. WHEN an item has a discount, THE SparFuchs_App SHALL highlight the discount amount in a distinct color
 5. WHEN displaying totals, THE SparFuchs_App SHALL show subtotal, pfand_total, and grand_total as separate line items
 6. WHEN a user edits any field, THE SparFuchs_App SHALL recalculate affected totals automatically
-7. WHEN a user confirms the receipt, THE SparFuchs_App SHALL persist both the image and structured data to Firestore
+7. WHEN a user confirms the receipt, THE SparFuchs_App SHALL persist both the image and structured data to Local Storage (Hive)
 
 ### Requirement 3: Expense Dashboard
 
@@ -56,11 +53,11 @@ SparFuchs AI is a German receipt scanning and expense tracking mobile applicatio
 
 #### Acceptance Criteria
 
-1. WHEN a user opens the dashboard, THE Expense_Dashboard SHALL display a bar chart of expenses by time period (Days/Weeks/Months)
-2. WHEN displaying the chart, THE Expense_Dashboard SHALL stack categories with distinct colors (Groceries, Household, Beverages, Housing & Living, Electronics, Fashion, Mobility)
-3. WHEN a user selects a time period, THE Expense_Dashboard SHALL show category breakdown with percentage and Euro amount
-4. WHEN displaying category totals, THE Expense_Dashboard SHALL calculate percentages relative to total spending
-5. WHEN a user taps a category, THE Expense_Dashboard SHALL navigate to filtered receipt list for that category
+1. WHEN a user opens the dashboard, THE Expense_Dashboard SHALL display a monthly summary of total spending
+2. WHEN displaying the summary, THE Expense_Dashboard SHALL show the currency formatted in Euro (€)
+3. WHEN a user navigates to Statistics, THE SparFuchs_App SHALL show a bar chart of expenses over time
+4. WHEN displaying category breakdowns, THE SparFuchs_App SHALL use distinct colors for Groceries, Household, Beverages, etc.
+5. WHEN a user selects a Category, THE SparFuchs_App SHALL show a filtered list of receipts for that category
 
 ### Requirement 4: Digital Receipt Archive
 
@@ -74,82 +71,50 @@ SparFuchs AI is a German receipt scanning and expense tracking mobile applicatio
 4. WHEN a user taps a receipt, THE Receipt_Archive SHALL display the full Receipt Detail View with original image
 5. WHEN a user bookmarks a receipt, THE Receipt_Archive SHALL mark it for quick access in a Bookmarks view
 
-### Requirement 5: Household Sharing
+### Requirement 5: Category Analysis
 
-**User Story:** As a household member, I want to share expense data with my partner/family, so that we can track our combined spending.
-
-#### Acceptance Criteria
-
-1. WHEN a user creates a household, THE Household_Manager SHALL generate a unique invite code
-2. WHEN a user joins via invite code, THE Household_Manager SHALL link their account to the household
-3. WHEN any household member scans a receipt, THE Household_Manager SHALL sync it to all members
-4. WHEN displaying shared receipts, THE SparFuchs_App SHALL show the member avatar who scanned it
-5. WHEN viewing the dashboard, THE Expense_Dashboard SHALL aggregate spending from all household members
-6. IF a user leaves a household, THEN THE Household_Manager SHALL retain their personal receipts but remove shared access
-
-### Requirement 6: Inflation Tracker (Killer Feature)
-
-**User Story:** As a price-conscious shopper, I want to track how specific product prices change over time, so that I can identify inflation trends and find the best deals.
+**User Story:** As a user, I want to see exactly how much I spend in specific categories like Groceries or Electronics, so I can budget better.
 
 #### Acceptance Criteria
 
-1. WHEN a product is scanned multiple times, THE Inflation_Tracker SHALL record each price point with date and merchant
-2. WHEN a user views a product, THE Inflation_Tracker SHALL display a price history chart
-3. WHEN prices increase significantly (>10%), THE Inflation_Tracker SHALL highlight the change with a warning indicator
-4. WHEN a user searches for a product, THE Inflation_Tracker SHALL show price comparison across different merchants
-5. WHEN displaying price history, THE Inflation_Tracker SHALL calculate and show percentage change over selected period
+1. WHEN a user opens Category Analysis, THE SparFuchs_App SHALL display a Pie Chart of spending distribution
+2. WHEN viewing the chart, THE SparFuchs_App SHALL show percentage labels for each category
+3. WHEN a user scrolls down, THE SparFuchs_App SHALL display detailed cards for each category with total amount and percentage
+4. THE App SHALL calculate these statistics locally based on stored receipts
 
-### Requirement 7: Smart Recipe Suggestions (Killer Feature)
+### Requirement 6: Data Privacy & Local-First Architecture
 
-**User Story:** As a home cook, I want recipe suggestions based on my grocery purchases, so that I can make the most of ingredients I just bought.
-
-#### Acceptance Criteria
-
-1. WHEN a receipt is confirmed, THE Recipe_Engine SHALL analyze food items and suggest 3 relevant recipes
-2. WHEN suggesting recipes, THE Recipe_Engine SHALL prioritize recipes using multiple purchased ingredients
-3. WHEN displaying a recipe suggestion, THE SparFuchs_App SHALL show recipe name, image thumbnail, and matched ingredients
-4. WHEN a user taps a recipe, THE SparFuchs_App SHALL display full recipe details or link to external source
-5. IF no food items are detected, THEN THE Recipe_Engine SHALL skip recipe suggestions for that receipt
-
-### Requirement 8: Warranty & Return Monitor (Killer Feature)
-
-**User Story:** As a consumer, I want automatic reminders for return windows and warranty expiration, so that I never miss a deadline for returns or warranty claims.
+**User Story:** As a user, I want my data stored locally on my device without cloud dependency, so that I maintain full control and privacy.
 
 #### Acceptance Criteria
 
-1. WHEN electronics or clothing items are detected, THE Warranty_Monitor SHALL flag them for tracking
-2. WHEN an item is flagged, THE Warranty_Monitor SHALL set a 14-day return window reminder
-3. WHEN an electronics item is detected, THE Warranty_Monitor SHALL set a 2-year warranty expiry reminder
-4. WHEN a reminder date approaches (3 days before), THE SparFuchs_App SHALL send a push notification
-5. WHEN a user views tracked items, THE Warranty_Monitor SHALL display days remaining for return/warranty
-6. WHEN a user marks an item as returned, THE Warranty_Monitor SHALL cancel associated reminders
+1. THE SparFuchs_App SHALL use a local-first architecture: Direct calls from Flutter to Gemini API
+2. THE SparFuchs_App SHALL store all user data and receipt images in Hive (Local Database)
+3. THE SparFuchs_App SHALL NOT require user authentication or login
+4. THE SparFuchs_App SHALL NOT store receipt images on external servers (excluding transient processing by Gemini API)
+5. WHEN a user clears data, THE SparFuchs_App SHALL permanently delete all local records
 
-### Requirement 9: Data Privacy & GDPR Compliance (Serverless Architecture)
+### Requirement 7: Localization
 
-**User Story:** As a German user, I want my data handled securely with minimal third-party exposure, so that my privacy is protected.
-
-#### Acceptance Criteria
-
-1. THE SparFuchs_App SHALL use a serverless architecture: Direct calls from Flutter to Gemini API (Google AI) and Firestore (Google Cloud)
-2. WHEN processing receipt images, THE SparFuchs_App SHALL send data directly to Gemini API without intermediate servers
-3. THE SparFuchs_App SHALL store user data in Firestore (Europe region) and receipt images in Firebase Storage or Local Device Storage
-4. WHEN a user requests data export, THE SparFuchs_App SHALL provide all personal data in machine-readable format within 30 days
-5. WHEN a user requests account deletion, THE SparFuchs_App SHALL permanently delete all user data from Firestore and Storage within 30 days
-6. THE SparFuchs_App SHALL display clear privacy policy and obtain explicit consent before data collection
-7. THE SparFuchs_App SHALL NOT store receipt images on Gemini servers after processing (stateless processing)
-
-### Requirement 10: Localization
-
-**User Story:** As a DACH region user, I want the app in my preferred language with proper currency formatting, so that I can use it comfortably.
+**User Story:** As a user, I want the app to handle German receipt formats correctly.
 
 #### Acceptance Criteria
 
-1. THE SparFuchs_App SHALL support English and German language interfaces
+1. THE SparFuchs_App SHALL provide an English user interface
 2. WHEN displaying currency, THE SparFuchs_App SHALL format amounts in Euro (€) with German locale (comma as decimal separator)
-3. WHEN displaying dates, THE SparFuchs_App SHALL use German format (DD.MM.YYYY)
-4. WHEN parsing receipts, THE AI_Scanner SHALL handle German product names, abbreviations, and special characters (ä, ö, ü, ß)
+3. WHEN parsing receipts, THE AI_Scanner SHALL handle German product names and abbreviations
 
-### Requirement 11: Receipt Data Serialization
+### Requirement 8: Settings & Preferences
+
+**User Story:** As a user, I want to manage my app data.
+
+#### Acceptance Criteria
+
+1. WHEN a user opens Settings, THE SparFuchs_App SHALL display options to clear data or view storage usage
+2. WHEN a user taps "Clear All Data", THE SparFuchs_App SHALL show a confirmation dialog
+3. WHEN confirmed, THE SparFuchs_App SHALL wipe all data from Hive
+
+### Requirement 9: Receipt Data Serialization
 
 **User Story:** As a developer, I want consistent data serialization for receipts, so that data integrity is maintained across the system.
 
@@ -209,28 +174,3 @@ SparFuchs AI is a German receipt scanning and expense tracking mobile applicatio
   }
 }
 ```
-
-### Requirement 12: Settings & Preferences
-
-**User Story:** As a user, I want to customize the app appearance and manage my data, so that I can personalize my experience.
-
-#### Acceptance Criteria
-
-1. WHEN a user opens Settings, THE SparFuchs_App SHALL display Theme, Storage, and About sections
-2. WHEN a user toggles Theme, THE SparFuchs_App SHALL switch between Light and Dark mode immediately
-3. WHEN a user taps "Clear All Data", THE SparFuchs_App SHALL show a confirmation dialog warning about permanent deletion
-4. WHEN confirmed, THE SparFuchs_App SHALL delete all receipts from local storage (Hive)
-5. WHEN viewing Storage info, THE SparFuchs_App SHALL show the number of receipts stored
-6. THE SparFuchs_App SHALL display in English only (no language picker)
-
-### Requirement 13: Local-First Storage
-
-**User Story:** As a user, I want my data stored locally on my device, so that I can use the app without requiring internet for data access.
-
-#### Acceptance Criteria
-
-1. WHEN a user saves a receipt, THE SparFuchs_App SHALL persist it to Hive (local database)
-2. WHEN a user opens the Archive, THE SparFuchs_App SHALL load receipts from local storage
-3. WHEN the app starts, THE SparFuchs_App SHALL NOT require authentication or network access for viewing data
-4. WHEN a user opens a saved receipt, THE SparFuchs_App SHALL display all details from local storage
-

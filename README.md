@@ -21,10 +21,8 @@ A smart receipt scanning and expense tracking app. Built with Flutter and powere
 ### 🔜 Planned
 
 - Household sharing for families
-- Inflation tracker (price history)
-- Recipe suggestions
-- Warranty reminders
 - Dark Mode theme
+- PDF Export and Backup
 
 ## Tech Stack
 
