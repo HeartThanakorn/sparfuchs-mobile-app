@@ -1,27 +1,20 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sparfuchs_ai/core/models/receipt.dart';
-import 'package:sparfuchs_ai/features/receipt/data/repositories/receipt_repository.dart';
+import 'package:sparfuchs_ai/features/receipt/data/repositories/local_receipt_repository.dart';
 
-/// Provider for Firestore instance
-final firestoreProvider = Provider<FirebaseFirestore>((ref) {
-  return FirebaseFirestore.instance;
+/// Provider for LocalReceiptRepository (Local Only - No Auth Required)
+final receiptRepositoryProvider = Provider<LocalReceiptRepository>((ref) {
+  return LocalReceiptRepository();
 });
 
-/// Provider for ReceiptRepository
-final receiptRepositoryProvider = Provider<ReceiptRepository>((ref) {
-  final firestore = ref.watch(firestoreProvider);
-  return ReceiptRepository(firestore: firestore);
-});
-
-/// StreamProvider for all receipts of the current user
+/// StreamProvider for all receipts from local storage
 /// Receipts are ordered by transaction date descending
 final receiptsStreamProvider = StreamProvider<List<Receipt>>((ref) {
   final repository = ref.watch(receiptRepositoryProvider);
-  return repository.watchReceipts(); // Uses current user from Auth by default
+  return repository.watchReceipts();
 });
 
-/// Provider for a single receipt by ID (Future, not Stream, consistent with Repo)
+/// Provider for a single receipt by ID
 final receiptByIdProvider = FutureProvider.family<Receipt?, String>((ref, receiptId) async {
   final repository = ref.watch(receiptRepositoryProvider);
   return repository.getReceipt(receiptId);
