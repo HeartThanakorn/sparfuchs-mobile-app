@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import 'package:sparfuchs_ai/core/constants/app_constants.dart';
 import 'package:sparfuchs_ai/core/models/receipt.dart';
 import 'package:sparfuchs_ai/features/receipt/data/providers/receipt_providers.dart';
+import 'package:sparfuchs_ai/features/receipt/data/repositories/local_receipt_repository.dart';
+import 'package:sparfuchs_ai/core/services/local_database_service.dart';
 
 /// Receipt Archive Screen with real Firestore data
 class ReceiptArchiveScreen extends ConsumerStatefulWidget {
@@ -21,6 +23,36 @@ class _ReceiptArchiveScreenState extends ConsumerState<ReceiptArchiveScreen> {
     symbol: '€',
     decimalDigits: 2,
   );
+
+  /// Deep copy a Map to convert all nested Map<dynamic, dynamic> to Map<String, dynamic>
+  Map<String, dynamic> _deepCopyMap(Map original) {
+    final result = <String, dynamic>{};
+    for (final entry in original.entries) {
+      final key = entry.key.toString();
+      final value = entry.value;
+      if (value is Map) {
+        result[key] = _deepCopyMap(value);
+      } else if (value is List) {
+        result[key] = _deepCopyList(value);
+      } else {
+        result[key] = value;
+      }
+    }
+    return result;
+  }
+
+  /// Deep copy a List to convert all nested maps
+  List<dynamic> _deepCopyList(List original) {
+    return original.map((item) {
+      if (item is Map) {
+        return _deepCopyMap(item);
+      } else if (item is List) {
+        return _deepCopyList(item);
+      } else {
+        return item;
+      }
+    }).toList();
+  }
 
   @override
   Widget build(BuildContext context) {

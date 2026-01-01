@@ -25,37 +25,43 @@ class LocalReceiptRepository {
     }
   }
 
+  /// Last parsing error (for debugging)
+  static String? lastParsingError;
+
   /// Get all receipts from local storage
   List<Receipt> _getAllReceipts() {
     final box = LocalDatabaseService.receiptsBox;
     final receipts = <Receipt>[];
+    lastParsingError = null; // Clear previous error
     
-    debugPrint('_getAllReceipts: Box has ${box.keys.length} keys');
+    if (box.keys.isEmpty) {
+      return receipts;
+    }
     
     for (final key in box.keys) {
       try {
         final rawData = box.get(key);
         if (rawData == null) {
-          debugPrint('_getAllReceipts: Key $key has null data');
           continue;
         }
         
         final data = _deepCopyMap(rawData as Map);
         data['receiptId'] = key.toString();
         
-        debugPrint('_getAllReceipts: Parsing receipt $key');
         final receipt = Receipt.fromJson(data);
         receipts.add(receipt);
-        debugPrint('_getAllReceipts: Successfully parsed receipt $key');
       } catch (e, stack) {
-        debugPrint('Error parsing receipt $key: $e');
-        debugPrint('Stack: $stack');
+        // Store the first error for UI display
+        if (lastParsingError == null) {
+          lastParsingError = 'Error parsing receipt $key: $e\nStack: $stack';
+        }
       }
     }
     
     // Sort by createdAt descending
-    receipts.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-    debugPrint('_getAllReceipts: Returning ${receipts.length} receipts');
+    if (receipts.isNotEmpty) {
+      receipts.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    }
     return receipts;
   }
 
