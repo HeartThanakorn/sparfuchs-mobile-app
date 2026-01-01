@@ -81,10 +81,6 @@ class _ReceiptArchiveScreenState extends ConsumerState<ReceiptArchiveScreen> {
               icon: const Icon(Icons.refresh),
               onPressed: () => setState(() {}),
             ),
-            IconButton(
-              icon: const Icon(Icons.filter_list),
-              onPressed: () => _showFilterSheet(context),
-            ),
           ],
         ),
         body: receipts.isEmpty
@@ -269,34 +265,6 @@ class _ReceiptArchiveScreenState extends ConsumerState<ReceiptArchiveScreen> {
   void _onBookmarkTap(Receipt receipt) async {
     final repository = ref.read(receiptRepositoryProvider);
     await repository.toggleBookmark(receipt.receiptId, !receipt.isBookmarked);
-  }
-
-  void _showFilterSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Filter', style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 16),
-            ListTile(
-              leading: const Icon(Icons.bookmark),
-              title: const Text('Nur Lesezeichen'),
-              trailing: Switch(value: false, onChanged: (_) {}),
-            ),
-            ListTile(
-              leading: const Icon(Icons.calendar_today),
-              title: const Text('Select date range'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {},
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
 
