@@ -107,6 +107,11 @@ class LocalReceiptRepository {
 
   /// Get all receipts (one-time fetch)
   Future<List<Receipt>> getAllReceipts() async {
+    return getAllReceiptsSync();
+  }
+
+  /// Get all receipts synchronously (since Hive is sync)
+  List<Receipt> getAllReceiptsSync() {
     return _getAllReceipts();
   }
 

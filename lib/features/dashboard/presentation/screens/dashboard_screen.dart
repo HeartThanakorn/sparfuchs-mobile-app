@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:sparfuchs_ai/core/constants/app_constants.dart';
+import 'package:sparfuchs_ai/core/constants/app_formatters.dart';
 import 'package:sparfuchs_ai/core/models/receipt.dart';
 import 'package:sparfuchs_ai/features/receipt/data/providers/receipt_providers.dart';
 import 'package:sparfuchs_ai/features/receipt/presentation/screens/camera_screen.dart';
@@ -20,12 +21,6 @@ class DashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
-  static final _currencyFormat = NumberFormat.currency(
-    locale: 'en_US',
-    symbol: '€',
-    decimalDigits: 2,
-  );
-
   @override
   Widget build(BuildContext context) {
     final receiptsAsync = ref.watch(receiptsStreamProvider);
@@ -175,7 +170,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ),
           const SizedBox(height: 12),
           Text(
-            _currencyFormat.format(monthTotal),
+            AppFormatters.currency.format(monthTotal),
             style: const TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.bold,
@@ -330,7 +325,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               
               // Amount
               Text(
-                _currencyFormat.format(data.totals.grandTotal),
+                AppFormatters.currency.format(data.totals.grandTotal),
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,

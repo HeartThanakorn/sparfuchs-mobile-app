@@ -15,6 +15,19 @@ class AppTheme {
   static final Color errorRed = Color(AppColors.errorRed);
   static final Color neutralGray = Color(AppColors.neutralGray);
 
+  /// Category colors
+  static const categoryColors = {
+    'Groceries': Color(0xFF8B5CF6),     // Purple
+    'Household': Color(0xFFEC4899),     // Pink
+    'Beverages': Color(0xFF06B6D4),     // Cyan
+    'Housing & living': Color(0xFF10B981), // Green
+    'Electronics': Color(0xFF3B82F6),   // Blue
+    'Fashion': Color(0xFFF59E0B),       // Amber
+    'Mobility': Color(0xFF6366F1),      // Indigo
+    'Snacks': Color(0xFFEF4444),        // Red
+    'Other': Color(0xFF6B7280),         // Gray
+  };
+
   /// Light theme configuration
   static ThemeData get lightTheme {
     return ThemeData(

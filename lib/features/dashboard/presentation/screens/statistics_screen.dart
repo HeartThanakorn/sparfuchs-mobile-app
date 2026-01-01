@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import 'package:sparfuchs_ai/core/constants/app_constants.dart';
+import 'package:sparfuchs_ai/core/constants/app_formatters.dart';
 import 'package:sparfuchs_ai/core/models/receipt.dart';
-import 'package:sparfuchs_ai/core/services/local_database_service.dart';
+import 'package:sparfuchs_ai/features/receipt/data/providers/receipt_providers.dart';
 import 'package:sparfuchs_ai/features/inflation/presentation/screens/category_analysis_screen.dart';
+import 'package:sparfuchs_ai/shared/theme/app_theme.dart';
 
 /// Statistics Screen - Simplified with functional elements only
 class StatisticsScreen extends ConsumerStatefulWidget {
@@ -16,31 +18,9 @@ class StatisticsScreen extends ConsumerStatefulWidget {
 }
 
 class _StatisticsScreenState extends ConsumerState<StatisticsScreen> {
-  static final _currencyFormat = NumberFormat.currency(
-    locale: 'en_US',
-    symbol: '€',
-    decimalDigits: 2,
-  );
-
-  // Category colors
-  static const _categoryColors = {
-    'Groceries': Color(0xFF8B5CF6),     // Purple
-    'Household': Color(0xFFEC4899),     // Pink
-    'Beverages': Color(0xFF06B6D4),     // Cyan
-    'Housing & living': Color(0xFF10B981), // Green
-    'Electronics': Color(0xFF3B82F6),   // Blue
-    'Fashion': Color(0xFFF59E0B),       // Amber
-    'Mobility': Color(0xFF6366F1),      // Indigo
-    'Snacks': Color(0xFFEF4444),        // Red
-    'Other': Color(0xFF6B7280),         // Gray
-  };
-
   @override
   Widget build(BuildContext context) {
-    final receipts = _loadReceiptsFromHive();
-    final categoryTotals = _calculateCategoryTotals(receipts);
-    final totalSpending = categoryTotals.values.fold(0.0, (a, b) => a + b);
-    final monthlyData = _calculateMonthlyData(receipts);
+    final receiptsAsync = ref.watch(receiptsStreamProvider);
 
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
@@ -51,50 +31,60 @@ class _StatisticsScreenState extends ConsumerState<StatisticsScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            const SizedBox(height: 16),
-            
-            // Bar Chart
-            _buildBarChart(monthlyData),
-            
-            const SizedBox(height: 24),
-            
-            // Total Spending Header
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Total Spending',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(AppColors.darkNavy),
-                    ),
+      body: receiptsAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, stack) => Center(child: Text('Error: $err')),
+        data: (receipts) {
+          final categoryTotals = _calculateCategoryTotals(receipts);
+          final totalSpending = categoryTotals.values.fold(0.0, (a, b) => a + b);
+          final monthlyData = _calculateMonthlyData(receipts);
+
+          return SingleChildScrollView(
+            child: Column(
+              children: [
+                const SizedBox(height: 16),
+                
+                // Bar Chart
+                _buildBarChart(monthlyData),
+                
+                const SizedBox(height: 24),
+                
+                // Total Spending Header
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Total Spending',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Color(AppColors.darkNavy),
+                        ),
+                      ),
+                      Text(
+                        AppFormatters.currency.format(totalSpending),
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Color(AppColors.primaryTeal),
+                        ),
+                      ),
+                    ],
                   ),
-                  Text(
-                    _currencyFormat.format(totalSpending),
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Color(AppColors.primaryTeal),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+                
+                const SizedBox(height: 16),
+                
+                // Category List
+                _buildCategoryList(categoryTotals, totalSpending),
+                
+                const SizedBox(height: 100),
+              ],
             ),
-            
-            const SizedBox(height: 16),
-            
-            // Category List
-            _buildCategoryList(categoryTotals, totalSpending),
-            
-            const SizedBox(height: 100),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -178,7 +168,7 @@ class _StatisticsScreenState extends ConsumerState<StatisticsScreen> {
             touchTooltipData: BarTouchTooltipData(
               getTooltipItem: (group, groupIndex, rod, rodIndex) {
                 return BarTooltipItem(
-                  _currencyFormat.format(rod.toY),
+                  AppFormatters.currency.format(rod.toY),
                   const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -203,7 +193,7 @@ class _StatisticsScreenState extends ConsumerState<StatisticsScreen> {
       double currentY = 0;
 
       for (final entry in categoryData.entries) {
-        final color = _categoryColors[entry.key] ?? Colors.grey;
+        final color = AppTheme.categoryColors[entry.key] ?? Colors.grey;
         stackItems.add(BarChartRodStackItem(
           currentY,
           currentY + entry.value,
@@ -249,7 +239,7 @@ class _StatisticsScreenState extends ConsumerState<StatisticsScreen> {
         final percentage = totalSpending > 0 
             ? (entry.value / totalSpending * 100).round()
             : 0;
-        final color = _categoryColors[entry.key] ?? Colors.grey;
+        final color = AppTheme.categoryColors[entry.key] ?? Colors.grey;
 
         return InkWell(
           onTap: () => _navigateToPieChart(context),
@@ -292,7 +282,7 @@ class _StatisticsScreenState extends ConsumerState<StatisticsScreen> {
                     ),
                   ),
                   Text(
-                    _currencyFormat.format(entry.value),
+                    AppFormatters.currency.format(entry.value),
                     style: const TextStyle(
                       fontWeight: FontWeight.w600,
                       color: Color(AppColors.darkNavy),
@@ -316,58 +306,7 @@ class _StatisticsScreenState extends ConsumerState<StatisticsScreen> {
     );
   }
 
-  List<Receipt> _loadReceiptsFromHive() {
-    try {
-      final box = LocalDatabaseService.receiptsBox;
-      final receipts = <Receipt>[];
-      
-      for (final key in box.keys) {
-        try {
-          final rawData = box.get(key);
-          if (rawData != null) {
-            final data = _deepCopyMap(rawData as Map);
-            data['receiptId'] = key.toString();
-            receipts.add(Receipt.fromJson(data));
-          }
-        } catch (e) {
-          debugPrint('Error parsing receipt $key: $e');
-        }
-      }
-      
-      return receipts;
-    } catch (e) {
-      debugPrint('Error loading receipts: $e');
-      return [];
-    }
-  }
 
-  Map<String, dynamic> _deepCopyMap(Map original) {
-    final result = <String, dynamic>{};
-    for (final entry in original.entries) {
-      final key = entry.key.toString();
-      final value = entry.value;
-      if (value is Map) {
-        result[key] = _deepCopyMap(value);
-      } else if (value is List) {
-        result[key] = _deepCopyList(value);
-      } else {
-        result[key] = value;
-      }
-    }
-    return result;
-  }
-
-  List<dynamic> _deepCopyList(List original) {
-    return original.map((item) {
-      if (item is Map) {
-        return _deepCopyMap(item);
-      } else if (item is List) {
-        return _deepCopyList(item);
-      } else {
-        return item;
-      }
-    }).toList();
-  }
 
   Map<String, double> _calculateCategoryTotals(List<Receipt> receipts) {
     final Map<String, double> totals = {};
