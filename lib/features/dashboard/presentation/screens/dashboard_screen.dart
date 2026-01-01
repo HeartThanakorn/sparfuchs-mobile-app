@@ -317,8 +317,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     const SizedBox(height: 4),
                     Text(
                       date != null
-                          ? DateFormat('dd.MM.yyyy • HH:mm').format(date)
-                          : data.transaction.date,
+                          ? '${DateFormat('dd.MM.yyyy').format(date)} • ${data.transaction.time.length >= 5 ? data.transaction.time.substring(0, 5) : data.transaction.time}'
+                          : '${data.transaction.date} • ${data.transaction.time}',
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.grey.shade600,
