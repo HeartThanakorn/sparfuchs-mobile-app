@@ -186,6 +186,7 @@ class _StatisticsScreenState extends ConsumerState<StatisticsScreen> {
                   ),
                 );
               },
+            ),
           ),
         ),
       ),
