@@ -15,12 +15,16 @@ class LocalReceiptRepository {
 
   /// Stream of all receipts (sorted by date descending)
   Stream<List<Receipt>> watchReceipts() {
-    // Create a stream that emits current data and watches for changes
-    return LocalDatabaseService.receiptsBox
-        .watch()
-        .map((_) => _getAllReceipts())
-        .asyncMap((_) async => _getAllReceipts())
-        .startWith(_getAllReceipts());
+    debugPrint('LocalReceiptRepository.watchReceipts() called');
+    
+    // Use StreamController for more reliable updates
+    return Stream.periodic(const Duration(milliseconds: 500))
+        .asyncMap((_) async {
+          final receipts = _getAllReceipts();
+          debugPrint('watchReceipts: Found ${receipts.length} receipts');
+          return receipts;
+        })
+        .distinct((a, b) => a.length == b.length);
   }
 
   /// Get all receipts from local storage
@@ -28,19 +32,63 @@ class LocalReceiptRepository {
     final box = LocalDatabaseService.receiptsBox;
     final receipts = <Receipt>[];
     
+    debugPrint('_getAllReceipts: Box has ${box.keys.length} keys');
+    
     for (final key in box.keys) {
       try {
-        final data = Map<String, dynamic>.from(box.get(key) as Map);
+        final rawData = box.get(key);
+        if (rawData == null) {
+          debugPrint('_getAllReceipts: Key $key has null data');
+          continue;
+        }
+        
+        final data = _deepCopyMap(rawData as Map);
         data['receiptId'] = key.toString();
-        receipts.add(Receipt.fromJson(_convertDates(data)));
-      } catch (e) {
+        
+        debugPrint('_getAllReceipts: Parsing receipt $key');
+        final receipt = Receipt.fromJson(data);
+        receipts.add(receipt);
+        debugPrint('_getAllReceipts: Successfully parsed receipt $key');
+      } catch (e, stack) {
         debugPrint('Error parsing receipt $key: $e');
+        debugPrint('Stack: $stack');
       }
     }
     
     // Sort by createdAt descending
     receipts.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    debugPrint('_getAllReceipts: Returning ${receipts.length} receipts');
     return receipts;
+  }
+
+  /// Deep copy a Map to ensure all nested maps are mutable
+  Map<String, dynamic> _deepCopyMap(Map original) {
+    final result = <String, dynamic>{};
+    for (final entry in original.entries) {
+      final key = entry.key.toString();
+      final value = entry.value;
+      if (value is Map) {
+        result[key] = _deepCopyMap(value);
+      } else if (value is List) {
+        result[key] = _deepCopyList(value);
+      } else {
+        result[key] = value;
+      }
+    }
+    return result;
+  }
+
+  /// Deep copy a List to ensure all nested maps/lists are mutable
+  List<dynamic> _deepCopyList(List original) {
+    return original.map((item) {
+      if (item is Map) {
+        return _deepCopyMap(item);
+      } else if (item is List) {
+        return _deepCopyList(item);
+      } else {
+        return item;
+      }
+    }).toList();
   }
 
   /// Get all receipts (one-time fetch)

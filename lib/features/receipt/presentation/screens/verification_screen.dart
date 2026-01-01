@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:sparfuchs_ai/core/constants/app_constants.dart';
 import 'package:sparfuchs_ai/core/models/receipt.dart';
-import 'package:sparfuchs_ai/features/receipt/presentation/providers/receipt_provider.dart';
+import 'package:sparfuchs_ai/features/receipt/data/providers/receipt_providers.dart';
 import 'package:sparfuchs_ai/features/receipt/presentation/widgets/edit_line_item_dialog.dart';
 import 'package:sparfuchs_ai/features/inflation/data/providers/product_providers.dart';
 
