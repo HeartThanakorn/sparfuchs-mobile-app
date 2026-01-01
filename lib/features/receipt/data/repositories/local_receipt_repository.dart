@@ -14,17 +14,15 @@ class LocalReceiptRepository {
   final _uuid = const Uuid();
 
   /// Stream of all receipts (sorted by date descending)
-  Stream<List<Receipt>> watchReceipts() {
-    debugPrint('LocalReceiptRepository.watchReceipts() called');
+  Stream<List<Receipt>> watchReceipts() async* {
+    // Emit immediately on subscription
+    yield _getAllReceipts();
     
-    // Use StreamController for more reliable updates
-    return Stream.periodic(const Duration(milliseconds: 500))
-        .asyncMap((_) async {
-          final receipts = _getAllReceipts();
-          debugPrint('watchReceipts: Found ${receipts.length} receipts');
-          return receipts;
-        })
-        .distinct((a, b) => a.length == b.length);
+    // Then poll every second for updates
+    while (true) {
+      await Future.delayed(const Duration(seconds: 1));
+      yield _getAllReceipts();
+    }
   }
 
   /// Get all receipts from local storage
