@@ -4,18 +4,15 @@ import 'package:intl/intl.dart';
 import 'package:sparfuchs_ai/core/constants/app_constants.dart';
 import 'package:sparfuchs_ai/core/models/receipt.dart';
 import 'package:sparfuchs_ai/features/receipt/data/providers/receipt_providers.dart';
-import 'package:sparfuchs_ai/features/receipt/data/repositories/local_receipt_repository.dart';
 import 'package:sparfuchs_ai/core/services/local_database_service.dart';
 import 'package:sparfuchs_ai/features/receipt/presentation/screens/receipt_detail_screen.dart';
-import 'package:sparfuchs_ai/features/receipt/presentation/screens/bookmarks_screen.dart';
 
-/// Receipt Archive Screen with real Firestore data
+/// Receipt Archive Screen with WORKING filter
 class ReceiptArchiveScreen extends ConsumerStatefulWidget {
   const ReceiptArchiveScreen({super.key});
 
   @override
-  ConsumerState<ReceiptArchiveScreen> createState() =>
-      _ReceiptArchiveScreenState();
+  ConsumerState<ReceiptArchiveScreen> createState() => _ReceiptArchiveScreenState();
 }
 
 class _ReceiptArchiveScreenState extends ConsumerState<ReceiptArchiveScreen> {
@@ -26,69 +23,53 @@ class _ReceiptArchiveScreenState extends ConsumerState<ReceiptArchiveScreen> {
     decimalDigits: 2,
   );
 
-  /// Deep copy a Map to convert all nested Map<dynamic, dynamic> to Map<String, dynamic>
-  Map<String, dynamic> _deepCopyMap(Map original) {
-    final result = <String, dynamic>{};
-    for (final entry in original.entries) {
-      final key = entry.key.toString();
-      final value = entry.value;
-      if (value is Map) {
-        result[key] = _deepCopyMap(value);
-      } else if (value is List) {
-        result[key] = _deepCopyList(value);
-      } else {
-        result[key] = value;
-      }
-    }
-    return result;
-  }
-
-  /// Deep copy a List to convert all nested maps
-  List<dynamic> _deepCopyList(List original) {
-    return original.map((item) {
-      if (item is Map) {
-        return _deepCopyMap(item);
-      } else if (item is List) {
-        return _deepCopyList(item);
-      } else {
-        return item;
-      }
-    }).toList();
-  }
+  // FILTER STATE
+  bool _showBookmarksOnly = false;
+  DateTimeRange? _dateRange;
 
   @override
   Widget build(BuildContext context) {
     try {
-      // Direct Hive access (works better than StreamProvider)
-      final List<Receipt> receipts = _loadReceiptsFromHive();
+      final List<Receipt> allReceipts = _loadReceiptsFromHive();
+      final List<Receipt> filteredReceipts = _applyFilters(allReceipts);
 
       return Scaffold(
         appBar: AppBar(
           title: const Text('Receipt Archive'),
           centerTitle: true,
+          backgroundColor: const Color(AppColors.primaryTeal),
+          foregroundColor: Colors.white,
           actions: [
             IconButton(
-              icon: const Icon(Icons.bookmark_border),
-              tooltip: 'Bookmarks',
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const BookmarksScreen()),
-                );
-              },
+              icon: const Icon(Icons.refresh),
+              tooltip: 'Refresh',
+              onPressed: () => setState(() {}),
             ),
             IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed: () => setState(() {}),
+              icon: Icon(
+                Icons.filter_list,
+                color: _hasActiveFilters ? Colors.amber : Colors.white,
+              ),
+              tooltip: 'Filter',
+              onPressed: () => _showFilterSheet(context),
             ),
           ],
         ),
-        body: receipts.isEmpty
-            ? _buildEmptyState()
-            : _buildReceiptList(receipts),
+        body: Column(
+          children: [
+            // Active Filters Indicator
+            if (_hasActiveFilters) _buildActiveFiltersBar(),
+            
+            // Receipt List
+            Expanded(
+              child: filteredReceipts.isEmpty
+                  ? _buildEmptyState(allReceipts.isNotEmpty)
+                  : _buildReceiptList(filteredReceipts),
+            ),
+          ],
+        ),
       );
     } catch (e) {
-      // Show error instead of crashing
       debugPrint('Archive build error: $e');
       return Scaffold(
         appBar: AppBar(title: const Text('Receipt Archive')),
@@ -111,7 +92,383 @@ class _ReceiptArchiveScreenState extends ConsumerState<ReceiptArchiveScreen> {
     }
   }
 
-  /// Load receipts directly from Hive with proper Map conversion
+  bool get _hasActiveFilters => _showBookmarksOnly || _dateRange != null;
+
+  List<Receipt> _applyFilters(List<Receipt> receipts) {
+    var filtered = List<Receipt>.from(receipts);
+
+    // Filter by bookmarks
+    if (_showBookmarksOnly) {
+      filtered = filtered.where((r) => r.isBookmarked).toList();
+    }
+
+    // Filter by date range
+    if (_dateRange != null) {
+      filtered = filtered.where((r) {
+        try {
+          final date = DateFormat('yyyy-MM-dd').parse(r.receiptData.transaction.date);
+          return date.isAfter(_dateRange!.start.subtract(const Duration(days: 1))) &&
+                 date.isBefore(_dateRange!.end.add(const Duration(days: 1)));
+        } catch (_) {
+          return true; // Include if date parsing fails
+        }
+      }).toList();
+    }
+
+    // Sort by date (newest first)
+    filtered.sort((a, b) {
+      try {
+        final dateA = DateFormat('yyyy-MM-dd').parse(a.receiptData.transaction.date);
+        final dateB = DateFormat('yyyy-MM-dd').parse(b.receiptData.transaction.date);
+        return dateB.compareTo(dateA);
+      } catch (_) {
+        return 0;
+      }
+    });
+
+    return filtered;
+  }
+
+  Widget _buildActiveFiltersBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      color: const Color(AppColors.lightMint),
+      child: Row(
+        children: [
+          const Icon(Icons.filter_list, size: 16, color: Color(AppColors.primaryTeal)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              _getFilterDescription(),
+              style: const TextStyle(fontSize: 13, color: Color(AppColors.darkNavy)),
+            ),
+          ),
+          TextButton(
+            onPressed: () => setState(() {
+              _showBookmarksOnly = false;
+              _dateRange = null;
+            }),
+            child: const Text('Clear', style: TextStyle(fontSize: 13)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getFilterDescription() {
+    final parts = <String>[];
+    if (_showBookmarksOnly) parts.add('Bookmarks only');
+    if (_dateRange != null) {
+      parts.add('${_dateFormat.format(_dateRange!.start)} - ${_dateFormat.format(_dateRange!.end)}');
+    }
+    return parts.join(' • ');
+  }
+
+  void _showFilterSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Filter Receipts',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          _showBookmarksOnly = false;
+                          _dateRange = null;
+                        });
+                        setModalState(() {});
+                      },
+                      child: const Text('Reset'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                
+                // Bookmarks Toggle
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.bookmark, color: Color(AppColors.primaryTeal)),
+                  title: const Text('Bookmarks only'),
+                  trailing: Switch(
+                    value: _showBookmarksOnly,
+                    activeColor: const Color(AppColors.primaryTeal),
+                    onChanged: (value) {
+                      setState(() => _showBookmarksOnly = value);
+                      setModalState(() {});
+                    },
+                  ),
+                ),
+                
+                const Divider(),
+                
+                // Date Range
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.calendar_today, color: Color(AppColors.primaryTeal)),
+                  title: const Text('Date range'),
+                  subtitle: _dateRange != null
+                      ? Text(
+                          '${_dateFormat.format(_dateRange!.start)} - ${_dateFormat.format(_dateRange!.end)}',
+                          style: const TextStyle(color: Color(AppColors.primaryTeal)),
+                        )
+                      : const Text('All dates'),
+                  trailing: _dateRange != null
+                      ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            setState(() => _dateRange = null);
+                            setModalState(() {});
+                          },
+                        )
+                      : const Icon(Icons.chevron_right),
+                  onTap: () async {
+                    final now = DateTime.now();
+                    final picked = await showDateRangePicker(
+                      context: context,
+                      firstDate: DateTime(2020),
+                      lastDate: now,
+                      initialDateRange: _dateRange,
+                      helpText: 'Select date range',
+                      cancelText: 'Cancel',
+                      confirmText: 'Apply',
+                      saveText: 'Apply',
+                    );
+                    if (picked != null) {
+                      setState(() => _dateRange = picked);
+                      setModalState(() {});
+                    }
+                  },
+                ),
+                
+                const SizedBox(height: 16),
+                
+                // Apply Button
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    child: const Text('Apply Filters'),
+                  ),
+                ),
+                
+                const SizedBox(height: 16),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(bool hasReceiptsBeforeFilter) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            hasReceiptsBeforeFilter ? Icons.filter_list_off : Icons.receipt_long_outlined,
+            size: 64,
+            color: const Color(AppColors.neutralGray),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            hasReceiptsBeforeFilter ? 'No receipts match filters' : 'No receipts yet',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: const Color(AppColors.darkNavy),
+                ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            hasReceiptsBeforeFilter 
+                ? 'Try adjusting your filters'
+                : 'Scan your first receipt!',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: const Color(AppColors.neutralGray),
+                ),
+          ),
+          if (hasReceiptsBeforeFilter) ...[
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: () => setState(() {
+                _showBookmarksOnly = false;
+                _dateRange = null;
+              }),
+              child: const Text('Clear Filters'),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReceiptList(List<Receipt> receipts) {
+    // Group receipts by date
+    final Map<String, List<Receipt>> grouped = {};
+    for (final receipt in receipts) {
+      final dateKey = receipt.receiptData.transaction.date;
+      grouped.putIfAbsent(dateKey, () => []).add(receipt);
+    }
+
+    final dateKeys = grouped.keys.toList()
+      ..sort((a, b) {
+        try {
+          final dateA = DateFormat('yyyy-MM-dd').parse(a);
+          final dateB = DateFormat('yyyy-MM-dd').parse(b);
+          return dateB.compareTo(dateA);
+        } catch (_) {
+          return 0;
+        }
+      });
+
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      itemCount: dateKeys.length,
+      itemBuilder: (context, index) {
+        final dateKey = dateKeys[index];
+        final dateReceipts = grouped[dateKey]!;
+        
+        String formattedDate;
+        try {
+          final date = DateFormat('yyyy-MM-dd').parse(dateKey);
+          formattedDate = _dateFormat.format(date);
+        } catch (_) {
+          formattedDate = dateKey;
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                formattedDate,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+            ),
+            ...dateReceipts.map((receipt) => _buildReceiptCard(receipt)),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildReceiptCard(Receipt receipt) {
+    final data = receipt.receiptData;
+    
+    return Card(
+      elevation: 0,
+      margin: const EdgeInsets.only(bottom: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
+        onTap: () => _onReceiptTap(receipt),
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              // Merchant Avatar
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: const Color(AppColors.lightMint),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Center(
+                  child: Text(
+                    data.merchant.name.isNotEmpty 
+                        ? data.merchant.name[0].toUpperCase()
+                        : 'M',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(AppColors.primaryTeal),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              
+              // Details
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      data.merchant.name,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Color(AppColors.darkNavy),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${data.transaction.time.substring(0, 5)} • ${data.transaction.paymentMethod}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              // Amount
+              Text(
+                _currencyFormat.format(data.totals.grandTotal),
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: Color(AppColors.darkNavy),
+                ),
+              ),
+              const SizedBox(width: 8),
+              
+              // Bookmark Icon
+              GestureDetector(
+                onTap: () => _onBookmarkTap(receipt),
+                child: Icon(
+                  receipt.isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+                  size: 22,
+                  color: receipt.isBookmarked 
+                      ? const Color(AppColors.primaryTeal)
+                      : Colors.grey.shade400,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   List<Receipt> _loadReceiptsFromHive() {
     try {
       final box = LocalDatabaseService.receiptsBox;
@@ -130,10 +487,6 @@ class _ReceiptArchiveScreenState extends ConsumerState<ReceiptArchiveScreen> {
         }
       }
       
-      // Sort by createdAt descending
-      if (receipts.isNotEmpty) {
-        receipts.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      }
       return receipts;
     } catch (e) {
       debugPrint('Error loading receipts: $e');
@@ -141,314 +494,47 @@ class _ReceiptArchiveScreenState extends ConsumerState<ReceiptArchiveScreen> {
     }
   }
 
-  Widget _buildErrorState(String error) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.error_outline,
-            size: 64,
-            color: const Color(AppColors.errorRed),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Error loading',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            error,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: const Color(AppColors.neutralGray),
-                ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.receipt_long,
-            size: 80,
-            color: const Color(AppColors.neutralGray).withValues(alpha: 0.4),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'No receipts yet',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: const Color(AppColors.neutralGray),
-                ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Scan your first receipt!',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: const Color(AppColors.neutralGray),
-                ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildReceiptList(List<Receipt> receipts) {
-    final groupedReceipts = _groupReceiptsByDate(receipts);
-
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      itemCount: groupedReceipts.length,
-      itemBuilder: (context, index) {
-        final entry = groupedReceipts.entries.elementAt(index);
-        return _ReceiptDateGroup(
-          dateLabel: entry.key,
-          receipts: entry.value,
-          currencyFormat: _currencyFormat,
-          onReceiptTap: _onReceiptTap,
-          onBookmarkTap: _onBookmarkTap,
-        );
-      },
-    );
-  }
-
-  Map<String, List<Receipt>> _groupReceiptsByDate(List<Receipt> receipts) {
-    final grouped = <String, List<Receipt>>{};
-
-    for (final receipt in receipts) {
-      final dateStr = receipt.receiptData.transaction.date;
-      final date = DateTime.tryParse(dateStr);
-      String label;
-
-      if (date != null) {
-        final now = DateTime.now();
-        final today = DateTime(now.year, now.month, now.day);
-        final receiptDate = DateTime(date.year, date.month, date.day);
-
-        if (receiptDate == today) {
-          label = 'Heute';
-        } else if (receiptDate == today.subtract(const Duration(days: 1))) {
-          label = 'Gestern';
-        } else {
-          label = _dateFormat.format(date);
-        }
+  Map<String, dynamic> _deepCopyMap(Map original) {
+    final result = <String, dynamic>{};
+    for (final entry in original.entries) {
+      final key = entry.key.toString();
+      final value = entry.value;
+      if (value is Map) {
+        result[key] = _deepCopyMap(value);
+      } else if (value is List) {
+        result[key] = _deepCopyList(value);
       } else {
-        label = dateStr;
+        result[key] = value;
       }
-
-      grouped.putIfAbsent(label, () => []).add(receipt);
     }
+    return result;
+  }
 
-    return grouped;
+  List<dynamic> _deepCopyList(List original) {
+    return original.map((item) {
+      if (item is Map) {
+        return _deepCopyMap(item);
+      } else if (item is List) {
+        return _deepCopyList(item);
+      } else {
+        return item;
+      }
+    }).toList();
   }
 
   void _onReceiptTap(Receipt receipt) async {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => ReceiptDetailScreen(
-          receipt: receipt,
-        ),
+        builder: (_) => ReceiptDetailScreen(receipt: receipt),
       ),
     );
-    // Refresh after returning (in case receipt was updated)
-    if (mounted) {
-      setState(() {});
-    }
+    if (mounted) setState(() {});
   }
 
   void _onBookmarkTap(Receipt receipt) async {
     final repository = ref.read(receiptRepositoryProvider);
     await repository.toggleBookmark(receipt.receiptId, !receipt.isBookmarked);
-  }
-}
-
-class _ReceiptDateGroup extends StatelessWidget {
-  final String dateLabel;
-  final List<Receipt> receipts;
-  final NumberFormat currencyFormat;
-  final void Function(Receipt) onReceiptTap;
-  final void Function(Receipt) onBookmarkTap;
-
-  const _ReceiptDateGroup({
-    required this.dateLabel,
-    required this.receipts,
-    required this.currencyFormat,
-    required this.onReceiptTap,
-    required this.onBookmarkTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Text(
-            dateLabel,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: const Color(AppColors.neutralGray),
-                  fontWeight: FontWeight.bold,
-                ),
-          ),
-        ),
-        ...receipts.map((receipt) => _ReceiptTile(
-              receipt: receipt,
-              currencyFormat: currencyFormat,
-              onTap: () => onReceiptTap(receipt),
-              onBookmarkTap: () => onBookmarkTap(receipt),
-            )),
-      ],
-    );
-  }
-}
-
-class _ReceiptTile extends StatelessWidget {
-  final Receipt receipt;
-  final NumberFormat currencyFormat;
-  final VoidCallback onTap;
-  final VoidCallback onBookmarkTap;
-
-  const _ReceiptTile({
-    required this.receipt,
-    required this.currencyFormat,
-    required this.onTap,
-    required this.onBookmarkTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final merchant = receipt.receiptData.merchant;
-    final transaction = receipt.receiptData.transaction;
-    final totals = receipt.receiptData.totals;
-
-    String timeStr = transaction.time;
-    final timeParts = timeStr.split(':');
-    if (timeParts.length >= 2) {
-      timeStr = '${timeParts[0]}:${timeParts[1]}';
-    }
-
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              _MerchantAvatar(merchantName: merchant.name),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      merchant.name,
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
-                    Row(
-                      children: [
-                        Icon(Icons.access_time, size: 14,
-                            color: const Color(AppColors.neutralGray)),
-                        const SizedBox(width: 4),
-                        Text(timeStr,
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: const Color(AppColors.neutralGray),
-                                )),
-                        const SizedBox(width: 12),
-                        Icon(Icons.credit_card, size: 14,
-                            color: const Color(AppColors.neutralGray)),
-                        const SizedBox(width: 4),
-                        Text(transaction.paymentMethod,
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: const Color(AppColors.neutralGray),
-                                )),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    currencyFormat.format(totals.grandTotal),
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: const Color(AppColors.darkNavy),
-                        ),
-                  ),
-                  const SizedBox(height: 4),
-                  GestureDetector(
-                    onTap: onBookmarkTap,
-                    child: Icon(
-                      receipt.isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-                      size: 20,
-                      color: receipt.isBookmarked
-                          ? const Color(AppColors.warningOrange)
-                          : const Color(AppColors.neutralGray),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _MerchantAvatar extends StatelessWidget {
-  final String merchantName;
-
-  const _MerchantAvatar({required this.merchantName});
-
-  Color _getColorForMerchant(String name) {
-    final colors = [
-      const Color(AppColors.primaryTeal),
-      const Color(0xFF3498DB),
-      const Color(0xFF9B59B6),
-      const Color(AppColors.warningOrange),
-      const Color(AppColors.successGreen),
-    ];
-    return colors[name.length % colors.length];
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final color = _getColorForMerchant(merchantName);
-    final initial = merchantName.isNotEmpty ? merchantName[0].toUpperCase() : '?';
-
-    return Container(
-      width: 44,
-      height: 44,
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Center(
-        child: Text(
-          initial,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: color,
-                fontWeight: FontWeight.bold,
-              ),
-        ),
-      ),
-    );
+    setState(() {});
   }
 }
