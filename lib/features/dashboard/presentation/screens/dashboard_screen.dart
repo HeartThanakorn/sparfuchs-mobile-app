@@ -5,6 +5,7 @@ import 'package:sparfuchs_ai/core/constants/app_constants.dart';
 import 'package:sparfuchs_ai/core/models/receipt.dart';
 import 'package:sparfuchs_ai/features/receipt/data/providers/receipt_providers.dart';
 import 'package:sparfuchs_ai/features/receipt/presentation/screens/camera_screen.dart';
+import 'package:sparfuchs_ai/features/dashboard/presentation/screens/statistics_screen.dart';
 
 /// Time period options for dashboard filtering
 enum TimePeriod { days, weeks, months }
@@ -108,9 +109,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings_outlined),
+            icon: const Icon(Icons.bar_chart),
+            tooltip: 'Statistics',
             onPressed: () {
-              // TODO: Navigate to settings
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const StatisticsScreen()),
+              );
             },
           ),
         ],

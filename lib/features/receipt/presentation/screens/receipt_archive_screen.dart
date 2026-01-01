@@ -6,6 +6,8 @@ import 'package:sparfuchs_ai/core/models/receipt.dart';
 import 'package:sparfuchs_ai/features/receipt/data/providers/receipt_providers.dart';
 import 'package:sparfuchs_ai/features/receipt/data/repositories/local_receipt_repository.dart';
 import 'package:sparfuchs_ai/core/services/local_database_service.dart';
+import 'package:sparfuchs_ai/features/receipt/presentation/screens/receipt_detail_screen.dart';
+import 'package:sparfuchs_ai/features/receipt/presentation/screens/bookmarks_screen.dart';
 
 /// Receipt Archive Screen with real Firestore data
 class ReceiptArchiveScreen extends ConsumerStatefulWidget {
@@ -65,6 +67,16 @@ class _ReceiptArchiveScreenState extends ConsumerState<ReceiptArchiveScreen> {
           title: const Text('Receipt Archive'),
           centerTitle: true,
           actions: [
+            IconButton(
+              icon: const Icon(Icons.bookmark_border),
+              tooltip: 'Bookmarks',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const BookmarksScreen()),
+                );
+              },
+            ),
             IconButton(
               icon: const Icon(Icons.refresh),
               onPressed: () => setState(() {}),
@@ -239,10 +251,19 @@ class _ReceiptArchiveScreenState extends ConsumerState<ReceiptArchiveScreen> {
     return grouped;
   }
 
-  void _onReceiptTap(Receipt receipt) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Öffne Beleg: ${receipt.receiptData.merchant.name}')),
+  void _onReceiptTap(Receipt receipt) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ReceiptDetailScreen(
+          receipt: receipt,
+        ),
+      ),
     );
+    // Refresh after returning (in case receipt was updated)
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   void _onBookmarkTap(Receipt receipt) async {
