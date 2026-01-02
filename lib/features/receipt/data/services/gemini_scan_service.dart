@@ -13,8 +13,8 @@ class GeminiScanService {
   static const String _apiEndpoint =
       'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
 
-  /// Default timeout for API calls
-  static const Duration _defaultTimeout = Duration(seconds: 30);
+  /// Default timeout for API calls (60s for complex receipts with Pfand)
+  static const Duration _defaultTimeout = Duration(seconds: 60);
 
   /// Maximum retry attempts
   static const int _maxRetries = 3;
@@ -125,7 +125,7 @@ class GeminiScanService {
         'temperature': 0.1,
         'topK': 32,
         'topP': 1,
-        'maxOutputTokens': 4096,
+        'maxOutputTokens': 8192, // Increased to handle complex receipts
         'responseMimeType': 'application/json',
       }
     };
@@ -172,8 +172,25 @@ class GeminiScanService {
         throw GeminiParseException.noContent();
       }
 
+      // Clean up the response - remove markdown code blocks if present
+      String cleanedText = textPart.trim();
+      
+      // Remove ```json ... ``` wrapper if present
+      if (cleanedText.startsWith('```json')) {
+        cleanedText = cleanedText.substring(7); // Remove ```json
+      } else if (cleanedText.startsWith('```')) {
+        cleanedText = cleanedText.substring(3); // Remove ```
+      }
+      
+      if (cleanedText.endsWith('```')) {
+        cleanedText = cleanedText.substring(0, cleanedText.length - 3); // Remove trailing ```
+      }
+      
+      cleanedText = cleanedText.trim();
+
       // Parse the JSON from the text
-      final receiptJson = jsonDecode(textPart) as Map<String, dynamic>;
+      final receiptJson = jsonDecode(cleanedText) as Map<String, dynamic>;
+      
       var receiptDataJson = receiptJson['receipt_data'] as Map<String, dynamic>?;
 
       if (receiptDataJson == null) {
