@@ -88,9 +88,17 @@ APK location: `build/app/outputs/flutter-apk/app-release.apk`
 
 ## Screenshots
 
-| Dashboard | Archive | Statistics |
-|-----------|---------|------------|
-| Monthly summary & receipts | Filter by date & bookmarks | Bar charts & categories |
+<p align="center">
+  <img src="screenshot/Screenshot_20260102_103612.jpg" width="200" alt="Dashboard"/>
+  <img src="screenshot/Screenshot_20260102_103836.jpg" width="200" alt="Receipt Archive"/>
+  <img src="screenshot/Screenshot_20260102_103851.jpg" width="200" alt="Receipt Detail"/>
+</p>
+
+<p align="center">
+  <img src="screenshot/Screenshot_20260102_103910.jpg" width="200" alt="Statistics"/>
+  <img src="screenshot/Screenshot_20260102_103929.jpg" width="200" alt="Category Analysis"/>
+  <img src="screenshot/Screenshot_20260102_104329.jpg" width="200" alt="Camera Scan"/>
+</p>
 
 ## Testing
 
